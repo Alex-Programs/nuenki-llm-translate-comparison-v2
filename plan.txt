@@ -1,0 +1,20 @@
+- Better execution format. We use an inheritance based system to define how we translate things in a structured, ordered way.
+- Better distinction of service providers.
+- More robust latency handling by running it on a server with a dedicated line.
+- Caching, obviously. Heaps of it.
+- Put everything in one program this time, rather than chaining.
+- Bradley-Terry, obviously
+- Seperate text datasets as well as separate languages
+- Also store data separately for different evaluators
+- The end goal is that you can pick:
+language
+text type
+evaluator(s)
+
+and it produces the ELO just for that. Ofc we don't want to do that client side, so pregen that stuff.
+
+oh and also correctly handle when some models (e.g. deepl) can't translate a lang. I guess just detect that it's not possible, then skip over, and have it missing from the dataset for those areas.
+
+still limit to English->Other lang.
+
+*maybe* include formality.

@@ -3,18 +3,44 @@
 - More robust latency handling by running it on a server with a dedicated line.
 - Caching, obviously. Heaps of it.
 - Put everything in one program this time, rather than chaining.
-- Bradley-Terry, obviously
+- Bradley-Terry
 - Seperate text datasets as well as separate languages
 - Also store data separately for different evaluators
-- The end goal is that you can pick:
-language
-text type
-evaluator(s)
+- Separate, controlled tests for:
+Temperature
+Language
 
-and it produces the ELO just for that. Ofc we don't want to do that client side, so pregen that stuff.
+Actually. Hmm. Can I combine them?
 
-oh and also correctly handle when some models (e.g. deepl) can't translate a lang. I guess just detect that it's not possible, then skip over, and have it missing from the dataset for those areas.
+Option A:
+- Iterate over languages
+- Iterate over model pairs
+- Iterate over temperatures
+- Translate with each sentence
 
-still limit to English->Other lang.
+That gives me:
+- What is best, by language
+- What is best, in general (just expand the frame)
+- Best temperatures (just change what we think about)
 
-*maybe* include formality.
+
+
+Option B:
+- Define an MMR for temp and an MMR for
+... yeah this won't be statistically independent
+
+
+
+
+
+Thinking about the algo:
+- each unit of inter-language comparison between models must occur at all 3 temps and all sentences
+- this means you can fairly look at per-sentence-category difficulties, per temps, etc
+- actual comparisons should be on an interleaved system, where we carefully choose the order for maximum delta
+- Also do anchor ones - highest to lowest, quartile to quartile, median-1 to highest+1, median+1 to lowest-1
+
+questions to ask:
+- are LLMs biast towards themselves? (probably best to just make "leaderboard if only x participated" with deltas)
+- which temps work best? 
+- best LLMs (take the mean of per-language, and have a disclaimer)
+- best LLMs at each language

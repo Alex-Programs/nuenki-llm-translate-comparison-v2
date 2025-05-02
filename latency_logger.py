@@ -2,9 +2,13 @@ import json
 import time
 
 
-def log_latency(record_id: str, duration: float) -> None:
+def log_latency(
+    model_id: str, sentence_cat: str, sentence: str, duration: float
+) -> None:
     entry = {
-        "id": record_id,
+        "model_id": model_id,
+        "sentence_cat": sentence_cat,
+        "sentence": sentence,
         "duration": duration,
         "logged_at": time.time(),
     }

@@ -1,2 +1,3 @@
 
 secrets_env.py
+*.pyc

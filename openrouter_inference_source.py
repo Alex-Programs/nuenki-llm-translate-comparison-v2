@@ -47,7 +47,6 @@ class OpenrouterGenericInference(AbstractGenericInference):
 
     def infer(
         self,
-        system_prompt: str,
         user_prompt: str,
         temperature: float,
     ) -> str:
@@ -59,7 +58,6 @@ class OpenrouterGenericInference(AbstractGenericInference):
             "model": self.model_slug,
             "temperature": temperature,
             "messages": [
-                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
         }

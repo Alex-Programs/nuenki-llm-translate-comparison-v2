@@ -11,13 +11,29 @@ class TranslatableLanguage(Enum):
     Hungarian = "Hungarian"
     French = "French"
     Japanese = "Japanese"
-    Esperanto = "Esperanto"
     Italian = "Italian"
     EuropeanSpanish = "EuropeanSpanish"
     Ukrainian = "Ukrainian"
     Swedish = "Swedish"
     Korean = "Korean"
-    Vietnamese = "Vietnamese"
+    Thai = "Thai"
+    Welsh = "Welsh"
+
+    def deepl_code(self) -> str:
+        _code_map = {
+            TranslatableLanguage.English: "EN",
+            TranslatableLanguage.German: "DE",
+            TranslatableLanguage.Chinese: "ZH",
+            TranslatableLanguage.Hungarian: "HU",
+            TranslatableLanguage.French: "FR",
+            TranslatableLanguage.Japanese: "JA",
+            TranslatableLanguage.Italian: "IT",
+            TranslatableLanguage.EuropeanSpanish: "ES",
+            TranslatableLanguage.Ukrainian: "UK",
+            TranslatableLanguage.Swedish: "SV",
+            TranslatableLanguage.Korean: "KO",
+        }
+        return _code_map[self]
 
 
 class EnumSupportedEncoder(json.JSONEncoder):
@@ -39,6 +55,7 @@ class ModelName(Enum):
     Gemma3_27B = "Gemma 3 27b"
     Lingvanex = "Lingvanex"
     Llama_4_Scout = "LLama 4 Scout"
+    Llama_4_Maverick = "LLama 4 Maverick"
     Llama33_70b = "Llama 3.3 70b"
     GPT_41_Nano = "GPT 4.1 Nano"
     Qwen_25_32B = "Qwen 2.5 32B"
@@ -108,11 +125,33 @@ class TestedEntry:
     model_company: ModelCompany
     inference_service_name: InferenceCompany
     inference_source: AbstractExecutableTranslator
+    temp: float | None
 
     def unique_id(self):
-        (
+        return (
             self.model_name.value
             + self.model_company.value
             + self.inference_service_name.value
-            + self.inference_source.value
+            + str(self.temp)
         )
+
+
+@dataclass
+class ComparisonItem:
+    # keys (ish!)
+    language: TranslatableLanguage
+    tested_entry_a: TestedEntry
+    tested_entry_b: TestedEntry
+
+    sentence: str
+    sentence_category: str
+    evaluating_model: str
+
+    # items
+    entry_a_translation: str
+    entry_b_translation: str
+
+    a_success: bool
+    b_success: bool
+    identical: bool
+    evaluating_response: str

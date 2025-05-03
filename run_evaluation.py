@@ -14,7 +14,7 @@ def pair_every(pairwise_items, input_data, start, interval, limit):
 
     count = 0
     for i, x in enumerate(input_data[start:]):
-        if count > limit:
+        if count >= limit:
             break
 
         if i % interval == 0 and last != x:
@@ -158,7 +158,7 @@ def compare_set(language, model_a, model_b, cache, compare_models):
 
                 print(model_a_translation, "::", model_b_translation)
 
-                coin_flip_key = f"COIN FLIP Language:{language.value}|Sentence cat:{category}|Sentence md5:{md5hash(sentence)}|{comparison_model}|{model_a}|{model_b}"
+                coin_flip_key = f"COIN FLIP Language:{language.value}|Sentence cat:{category}|Sentence md5:{md5hash(sentence)}|{comparison_model}|{model_a.unique_id()}|{model_b.unique_id()}"
                 swap_a_b = deterministic_coin_flip(coin_flip_key)
 
                 if swap_a_b:
@@ -211,6 +211,11 @@ B: ```{model_b_translation}```"""
                         last_line = last_line.replace("tempA!!!000", "Translation B")
                         last_line = last_line.replace("tempB!!!000", "Translation A")
                         print("Swapped: ", last_line)
+
+                        model_a_translation, model_b_translation = (
+                            model_b_translation,
+                            model_a_translation,
+                        )
                     else:
                         last_line = last_line_unswapped
 
@@ -303,6 +308,16 @@ def evaluate_datasets(target_languages, target_models, cache, compare_models):
     pair_every(pairwise_items, target_models, 3, 18, 999)
     pair_every(pairwise_items, target_models, 5, 24, 999)
     pair_every(pairwise_items, target_models, 0, 2, 4)
+
+    print("Pairwise length before dedup", len(pairwise_items))
+    dedup_pairwise = []
+    for x in pairwise_items:
+        if x in dedup_pairwise:
+            continue
+        dedup_pairwise.append(x)
+
+    pairwise_items = dedup_pairwise
+    print("Pairwise length after dedup", len(pairwise_items))
 
     print("Got pairwise items: ", pairwise_items)
     for a, b in pairwise_items:

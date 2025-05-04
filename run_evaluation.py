@@ -170,16 +170,14 @@ def compare_set(language, model_a, model_b, cache, compare_models):
 
                 comparison_prompt = f"""You're a translation expert. Compare two translations of the same sentence.
 Your gold standard is the idiomatic, native, absolutely correct style found in a high‑quality language‑learning textbook.
-Think step-by-step in **very short notes** (20–200 words), e.g. "A has better tone. B idiomatic. A grammar slip."
-Evaluate:
-- Accuracy (same meaning?)
-- Formality consistency
-- Idiomaticity (native phrasing?)
+Think step-by-step in **VERY** short notes (20–200 words), e.g. "A is more accurate. B uses more idiomatic phrasing. B uses 'Schlecht' incorrectly." Nobody will read them, so don't use fancy styling: They are merely your own chain of thought.
+Evaluate, in approx. priority high-to-low:
+- Accuracy (Same meaning conferred?)
+- Idiomaticity & style (native phrasing? Matches the desired style?)
 - Correct vocab
 - Correct grammar
-- Matches the desired style?
+- Consistency in formality
 Compare A and B as you go. On a **new line**, write only `Translation A`, `Translation B`, or `Identical` to show which is better.
-If they're identical, say that immediately, no analysis.
 
 Original: ```{sentence}```
 A: ```{model_a_translation}```
@@ -403,7 +401,7 @@ def evaluate_datasets(target_languages, target_models, cache, compare_models):
         # scale up the "unit of comparison" to 3.
 
         # - what if [any combination] of judgers were turned on - with and without amplification
-        # - what if we required a consensus of (4, 3, 2) before we generated one "comparison" ("Single unit consensus")
+        # - what if we required a consensus of (4, 3) before we generated one "comparison" ("Single unit consensus")
         # - what if we keep the "high-res comparisons", but only activated if there's over (4, 3, 2) consensus ("Multi-unit consensus")
 
         # ALL of that, but sorted by sentence types (yeah we're going to want to make it modular)

@@ -16,7 +16,7 @@ target_languages_full = [
 ]
 target_languages_testing = [TranslatableLanguage.German]
 
-evaluation_targets_testing = [
+evaluation_targets_full = [
     TestedEntry(
         model_name=ModelName.GPT_41,
         model_company=ModelCompany.OpenAI,

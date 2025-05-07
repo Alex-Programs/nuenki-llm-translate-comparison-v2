@@ -6,9 +6,10 @@ OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 
 class OpenrouterExecutableTranslator(AbstractExecutableTranslator):
-    def __init__(self, api_key: str, model_slug: str):
+    def __init__(self, api_key: str, model_slug: str, also_add=""):
         self.model_slug = model_slug
         self.api_key = api_key
+        self.also_add = ""
 
     def is_tl_valid(self, target_lang: TranslatableLanguage):
         return True
@@ -20,7 +21,9 @@ class OpenrouterExecutableTranslator(AbstractExecutableTranslator):
         text: str,
         temperature: float,
     ) -> str:
-        prompt = generate_translation_prompt(source_lang, target_lang, text)
+        prompt = self.also_add + generate_translation_prompt(
+            source_lang, target_lang, text
+        )
 
         headers = {
             "Content-Type": "application/json",

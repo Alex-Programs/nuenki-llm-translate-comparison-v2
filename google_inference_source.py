@@ -10,7 +10,7 @@ class GoogleExecutableTranslator(AbstractExecutableTranslator):
     def __init__(self, api_key: str, model_slug: str, thinking: bool):
         self.model_slug = model_slug
         self.api_key = api_key
-        self.client = genai.client(api_key=api_key)
+        self.client = genai.Client(api_key=api_key)
         self.thinking = thinking
 
     def is_tl_valid(self, target_lang: TranslatableLanguage):
@@ -47,7 +47,7 @@ class GoogleGenericInference(AbstractGenericInference):
     def __init__(self, api_key: str, model_slug: str, thinking: bool):
         self.api_key = api_key
         self.model_slug = model_slug
-        self.client = genai.client(api_key=api_key)
+        self.client = genai.Client(api_key=api_key)
         self.thinking = thinking
 
     def infer(

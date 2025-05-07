@@ -135,6 +135,7 @@ class TestedEntry:
     inference_service_name: InferenceCompany
     inference_source: AbstractExecutableTranslator
     temp: float | None
+    thinking: str | None
 
     def unique_id(self):
         return (

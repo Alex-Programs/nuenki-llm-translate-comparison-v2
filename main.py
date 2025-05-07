@@ -33,19 +33,40 @@ compare_models = [
         "x-ai/grok-3-beta-comparison-system",
         OpenrouterGenericInference(OPENROUTER_API_KEY, "x-ai/grok-3-beta"),
     ),
+    # (
+    #    "google/gemini-2.5-pro-exp-comparison-system-thinking",
+    #    GoogleGenericInference(GEMINI_API_KEY, "gemini-2.5-pro-exp-03-25", True),
+    # ),
     (
-        "google/gemini-2.5-pro-preview-05-06-comparison-system-thinking",
-        GoogleGenericInference(GEMINI_API_KEY, "gemini-2.5-pro-preview-05-06", True),
+        "google/gemini-2.5-flash-preview-thinking-comparison-system",
+        OpenrouterGenericInference(
+            OPENROUTER_API_KEY, "google/gemini-2.5-flash-preview:thinking"
+        ),
     ),
 ]
 
 # first run on testing dataset
-evaluate_datasets(
+"""
+data_testing = evaluate_datasets(
     target_languages_testing, evaluation_targets_testing, cache, compare_models
 )
 
+with open("out_testing.json", "w") as f:
+    f.write(json.dumps(data_testing, indent=4))"""
+
 # then run on sensible_large on German for a broad idea
+data_initial_comparison = evaluate_datasets(
+    [TranslatableLanguage.German],
+    evaluation_targets_sensible_large_temp0_nothink,
+    cache,
+    compare_models,
+)
+
+with open("out_initial_comparison.json", "w") as f:
+    f.write(json.dumps(data_initial_comparison, indent=4))
 
 # then run on the temperature testing dataset
+
+# then test the top models vs thinking models vs thinking on-off
 
 # then run on the low_resource_inform on the best existing models on all niche Nuenki langs

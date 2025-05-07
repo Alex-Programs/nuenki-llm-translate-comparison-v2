@@ -469,10 +469,6 @@ def evaluate_datasets(target_languages, target_models, cache, compare_models):
         print(amplified_data)
         print_model_rankings(amplified_data)
 
-        import sys
-
-        sys.exit()
-
         judge_names = [x for x, y in compare_models]
 
         out = {
@@ -695,9 +691,9 @@ def produce_sane_data_from_model(id_model_pairs, model):
                 "model": corresponding.dump_data(),
                 "model_id": i,
                 "intervals_95": {
-                    "low": low,
-                    "mid": mid,
-                    "high": high,
+                    "low": round(low, 4),
+                    "mid": round(mid, 4),
+                    "high": round(high, 4),
                 },
                 "p_vals": {},
             }
@@ -714,7 +710,7 @@ def produce_sane_data_from_model(id_model_pairs, model):
     for (k, v), p in p_vals.items():
         for m in sane_models_storage:
             if m["model_id"] == k:
-                m["p_vals"][v] = p
+                m["p_vals"][v] = round(p, 4)
 
     return sane_models_storage
 

@@ -71,7 +71,7 @@ class ModelName(Enum):
     Qwen3_30_a3b = "Qwen 3 30B A3B"
     Qwen3_14b = "Qwen 3 14B"
     Qwen3_32b = "Qwen 3 32B"
-    Qwen3_235b_a22b = "Qwen 3 32B A22B"
+    Qwen3_235b_a22b = "Qwen 3 235B A22B"
     Nuenki_Hybrid = "Nuenki Hybrid"
 
 

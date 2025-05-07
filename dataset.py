@@ -6,6 +6,7 @@ SENTENCES_LIST = {
         "Eggs US – Price – Chart",  # HN, ages ago - from the old benchmark
         "8 FUCKING IRONSHIPS (& gunboat friends)",  # r foxhole
         "Minimum Viable Blog",  # HN frontpage
+        "Key changes:",
     ],
     "short_sentence": [
         "This isn’t what I ordered.",  # wrote myself
@@ -14,6 +15,7 @@ SENTENCES_LIST = {
         "It doesn't matter now.",  # wrote myself
         "Try refreshing the page.",  # wrote myself
         "This reads like an LLM wrote it.",  # https://news.ycombinator.com/item?id=43870969
+        "Check important info.",
     ],
     "medium_sentence": [
         "And a few things I think would be cool, but aren't core to the idea:",  # from r foxhole
@@ -22,6 +24,7 @@ SENTENCES_LIST = {
         "The Nuenki browser extension finds sentences in the websites you visit.",  # nuenki front page!
         "idea: bounce it back and forth with wrapped encryption from a far probe.",  # my own notes
         "At father's command he'd had a crown made, a simple gold circlet.",  # intentionally irritating, literary, overdone sentence from https://www.reddit.com/r/WritingPrompts/comments/1kbhw9k/comment/mpwcpgu/
+        "Reduced temperature of translations based on preliminary results from translation research",  # nuenki changelogs
     ],
     "long_sentence": [
         "The dev feels that there won't really be a point of adding a new vehicle that can only do the same things as the other existing ones.",  # r vtolvr. I felt that it was sufficiently meandering
@@ -30,6 +33,7 @@ SENTENCES_LIST = {
         "This inherently sequential nature precludes parallelization within training examples, which becomes critical at longer sequence lengths, as memory constraints limit batching across examples",  # "attention is all you need" :P
         "The objective, of course, was never to solve the actual problem: No, the real reason they had gone through all of that bother was to *appear* to be working on the issue, never mind actually solving it.",  # more meandering text
         "The fact that you got a positive-sloping line out at all from the regression has to do more with the positions of the outliers than anything else.",  # https://news.ycombinator.com/item?id=43870969
+        "if you zoom in on the first table on the right, you can see people pooling their coins together to pay, because the card readers don't work.",  # https://www.reddit.com/r/europe/comments/1ka492r/blackout_in_barcelona/
     ],
     "paragraph": [
         "I built that, and made it open source. It turns out that you can! While its coherence is slightly lower than its peers (more on that in a moment), it is the most idiomatic model while also being far more consistent, with a much lower standard deviation across all three metrics. It works by taking the top 3-4 models for a given language (based on this research), translating with them, then having a judge model (currently redacted) consider the strengths and weaknesses of each translation and merge them together in an idiomatic way.",  # from https://nuenki.app/blog/the_best_translator_is_a_hybrid_translator, except I replaced "GPT-4.1" with "redacted" because I felt mentioning specific models would do little to help the "model-lineage-bias" issue!
@@ -38,5 +42,6 @@ SENTENCES_LIST = {
         "In a quiet forest, where the sun peeked through the trees like golden butter, Ellie the Elephant was not happy. Ellie couldn't find her hat! She asked the squirrels, who were too busy playing tag. She asked the birds, but they were too busy singing. At last, it was Mister Turtle who found it while munching a pile of autumn leaves.",  # my own; attempting to do it more like a child's story
         "The people who get what they want in these situations are the ones who are prepared to behave sufficiently unreasonably, and with sufficient stubbornness. This is a second order consequence of 'unaccountability' that Davies misses. For the customer, or the object of the system, it incentivises unpleasant behaviour - as unpleasant as possible - because it's often the only way to trigger the exception / escalation / special case, and get what you want.",  # comment on HN: https://news.ycombinator.com/item?id=43877301 - with some minor changes
         'They then run stepwise regression to determine variance contributions, seemingly ignoring their earlier results, and this leads to almost no contribution from numeracy. Why? Because they have ~10% shared variance and stepwise regression is greedy - will just take whatever you give it first. I can\'t mention this part enough. If you got a second, very similar language test, and added it to the model, you would _also_ find it has almost no unique variance added. Every thing they measure is incredibly noisy and they do not once attempt to deal with this. Human based reviewers, time-to-completion, etc. p-value for "language learning is more significant than numeracy" on the values they give (Steiger test) gives 0.772. Utterly insignificant.',  # https://news.ycombinator.com/item?id=43870969
+        "This article reminds me of another I read first here, 'Reality Has A Surprising Amount of Detail' by John Salvatier. At first blush 3D printing seems easy, but especially with smaller parts that might go through many duty cycles it's anything but. I'm going to have to do more than skim this, I think this one is worth multiple reads over many days to really absorb the densely packed information.",  # https://news.ycombinator.com/item?id=43888117
     ],
 }

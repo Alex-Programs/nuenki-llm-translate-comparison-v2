@@ -19,6 +19,12 @@ class TranslatableLanguage(Enum):
     Thai = "Thai"
     Welsh = "Welsh"
 
+    def nuenki_code(self) -> str:
+        if self == TranslatableLanguage.EuropeanSpanish:
+            return "Spanish"
+
+        return self.value
+
     def deepl_code(self) -> str:
         _code_map = {
             TranslatableLanguage.English: "EN",
@@ -66,6 +72,7 @@ class ModelName(Enum):
     Qwen3_14b = "Qwen 3 14B"
     Qwen3_32b = "Qwen 3 32B"
     Qwen3_235b_a22b = "Qwen 3 32B A22B"
+    Nuenki_Hybrid = "Nuenki Hybrid"
 
 
 class ModelCompany(Enum):
@@ -78,6 +85,7 @@ class ModelCompany(Enum):
     Meta = "Meta"
     Alibaba = "Alibaba"
     Mistral = "Mistral"
+    Nuenki = "Nuenki"
 
 
 class InferenceCompany(Enum):
@@ -87,6 +95,7 @@ class InferenceCompany(Enum):
     Anthropic = "Anthropic"
     DeepL = "DeepL"
     Lingvanex = "Lingvanex"
+    Nuenki = "Nuenki"
 
 
 # I'm not usually one for inheritance, but it works so nicely here!
@@ -134,6 +143,14 @@ class TestedEntry:
             + self.inference_service_name.value
             + str(self.temp)
         )
+
+    def dump_data(self):
+        return {
+            "model_name": self.model_name.value,
+            "model_company": self.model_company.value,
+            "inference_service_name": self.inference_service_name.value,
+            "temp": self.temp,
+        }
 
 
 @dataclass

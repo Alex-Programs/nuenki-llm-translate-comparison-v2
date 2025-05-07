@@ -16,7 +16,14 @@ target_languages_full = [
 ]
 target_languages_testing = [TranslatableLanguage.German]
 
-evaluation_targets_full = [
+evaluation_targets_sensible_large = [
+    TestedEntry(
+        model_name=ModelName.Nuenki_Hybrid,
+        model_company=ModelCompany.Nuenki,
+        inference_service_name=InferenceCompany.Nuenki,
+        inference_source=NuenkiHybridExecutableTranslator(NUENKI_API_KEY),
+        temp=None,
+    ),
     TestedEntry(
         model_name=ModelName.GPT_41,
         model_company=ModelCompany.OpenAI,
@@ -389,7 +396,206 @@ evaluation_targets_full = [
     # ),
 ]
 
+evaluation_targets_sensible_large = [
+    TestedEntry(
+        model_name=ModelName.Nuenki_Hybrid,
+        model_company=ModelCompany.Nuenki,
+        inference_service_name=InferenceCompany.Nuenki,
+        inference_source=NuenkiHybridExecutableTranslator(NUENKI_API_KEY),
+        temp=None,
+    ),
+    TestedEntry(
+        model_name=ModelName.GPT_41,
+        model_company=ModelCompany.OpenAI,
+        inference_service_name=InferenceCompany.Openrouter,
+        inference_source=OpenrouterExecutableTranslator(
+            OPENROUTER_API_KEY,
+            "openai/gpt-4.1",
+        ),
+        temp=0,
+    ),
+    TestedEntry(
+        model_name=ModelName.GPT_4o,
+        model_company=ModelCompany.OpenAI,
+        inference_service_name=InferenceCompany.Openrouter,
+        inference_source=OpenrouterExecutableTranslator(
+            OPENROUTER_API_KEY,
+            "openai/gpt-4o-2024-11-20",
+        ),
+        temp=0,
+    ),
+    TestedEntry(
+        model_name=ModelName.Grok_3_Beta,
+        model_company=ModelCompany.X_AI,
+        inference_service_name=InferenceCompany.Openrouter,
+        inference_source=OpenrouterExecutableTranslator(
+            OPENROUTER_API_KEY,
+            "x-ai/grok-3-beta",
+        ),
+        temp=0,
+    ),
+    TestedEntry(
+        model_name=ModelName.Claude_Sonnet_37_2025_02_19,
+        model_company=ModelCompany.Anthropic,
+        inference_service_name=InferenceCompany.Anthropic,
+        inference_source=AnthropicExecutableTranslator(
+            ANTHROPIC_API_KEY,
+            "claude-3-7-sonnet-20250219",
+        ),
+        temp=0,
+    ),
+    TestedEntry(
+        model_name=ModelName.Claude_Sonnet_35_2024_10_22,
+        model_company=ModelCompany.Anthropic,
+        inference_service_name=InferenceCompany.Anthropic,
+        inference_source=AnthropicExecutableTranslator(
+            ANTHROPIC_API_KEY,
+            "claude-3-5-sonnet-20241022",
+        ),
+        temp=0,
+    ),
+    TestedEntry(
+        model_name=ModelName.GPT_41_Mini,
+        model_company=ModelCompany.OpenAI,
+        inference_service_name=InferenceCompany.Openrouter,
+        inference_source=OpenrouterExecutableTranslator(
+            OPENROUTER_API_KEY,
+            "openai/gpt-4.1-mini",
+        ),
+        temp=0,
+    ),
+    TestedEntry(
+        model_name=ModelName.Gemini_25_Flash_Preview_04_17,
+        model_company=ModelCompany.Google,
+        inference_service_name=InferenceCompany.Openrouter,
+        inference_source=OpenrouterExecutableTranslator(
+            OPENROUTER_API_KEY,
+            "google/gemini-2.5-flash-preview",
+        ),
+        temp=0,
+    ),
+    TestedEntry(
+        model_name=ModelName.DeepL,
+        model_company=ModelCompany.DeepL,
+        inference_service_name=InferenceCompany.DeepL,
+        inference_source=DeeplExecutableTranslator(DEEPL_API_KEY),
+        temp=None,
+    ),
+    TestedEntry(
+        model_name=ModelName.Gemma3_27B,
+        model_company=ModelCompany.Google,
+        inference_service_name=InferenceCompany.Openrouter,
+        inference_source=OpenrouterExecutableTranslator(
+            OPENROUTER_API_KEY,
+            "gemma-3-27b",
+        ),
+        temp=0,
+    ),
+    TestedEntry(
+        model_name=ModelName.Lingvanex,
+        model_company=ModelCompany.Lingvanex,
+        inference_service_name=InferenceCompany.Lingvanex,
+        inference_source=LingvanexExecutableTranslator(LINGVANEX_API_KEY),
+        temp=None,
+    ),
+    TestedEntry(
+        model_name=ModelName.Qwen3_235b_a22b,
+        model_company=ModelCompany.Alibaba,
+        inference_service_name=InferenceCompany.Openrouter,
+        inference_source=OpenrouterExecutableTranslator(
+            OPENROUTER_API_KEY,
+            "qwen-3-235b-a22b",
+        ),
+        temp=0,
+    ),
+    TestedEntry(
+        model_name=ModelName.Qwen3_30_a3b,
+        model_company=ModelCompany.Alibaba,
+        inference_service_name=InferenceCompany.Openrouter,
+        inference_source=OpenrouterExecutableTranslator(
+            OPENROUTER_API_KEY,
+            "qwen-3-30-a3b",
+        ),
+        temp=0.0,
+    ),
+    TestedEntry(
+        model_name=ModelName.Llama_4_Maverick,
+        model_company=ModelCompany.Meta,
+        inference_service_name=InferenceCompany.Openrouter,
+        inference_source=OpenrouterExecutableTranslator(
+            OPENROUTER_API_KEY,
+            "meta-llama/llama-4-maverick:free",
+        ),
+        temp=0,
+    ),
+    TestedEntry(
+        model_name=ModelName.Llama_4_Scout,
+        model_company=ModelCompany.Meta,
+        inference_service_name=InferenceCompany.Openrouter,
+        inference_source=OpenrouterExecutableTranslator(
+            OPENROUTER_API_KEY,
+            "llama-4-scout",
+        ),
+        temp=0,
+    ),
+    TestedEntry(
+        model_name=ModelName.Llama33_70b,
+        model_company=ModelCompany.Meta,
+        inference_service_name=InferenceCompany.Openrouter,
+        inference_source=OpenrouterExecutableTranslator(
+            OPENROUTER_API_KEY,
+            "llama-3.3-70b",
+        ),
+        temp=0,
+    ),
+    TestedEntry(
+        model_name=ModelName.GPT_41_Nano,
+        model_company=ModelCompany.OpenAI,
+        inference_service_name=InferenceCompany.Openrouter,
+        inference_source=OpenrouterExecutableTranslator(
+            OPENROUTER_API_KEY,
+            "gpt-4.1-nano",
+        ),
+        temp=0,
+    ),
+    # TestedEntry(
+    #    model_name=ModelName.Llama_31_8b,
+    #    model_company=ModelCompany.Meta,
+    #    inference_service_name=InferenceCompany.Openrouter,
+    #    inference_source=OpenrouterExecutableTranslator(
+    #        OPENROUTER_API_KEY,
+    #        "llama-3.1-8b-instant",
+    #    ),
+    # ),
+    # TestedEntry(
+    #    model_name=ModelName.Mistral_Small_Latest,
+    #    model_company=ModelCompany.Mistral,
+    #    inference_service_name=InferenceCompany.Mistral,
+    #    inference_source=MistralExecutableTranslator(
+    #        MISTRAL_API_KEY,
+    #        "mistral-small-latest",
+    #    ),
+    # ),
+    # TestedEntry(
+    #    model_name=ModelName.Mistral_Saba_24B,
+    #    model_company=ModelCompany.Mistral,
+    #    inference_service_name=InferenceCompany.Mistral,
+    #    inference_source=MistralExecutableTranslator(
+    #        MISTRAL_API_KEY,
+    #        "mistral-saba-24b",
+    #    ),
+    # ),
+]
+
+
 evaluation_targets_testing = [
+    TestedEntry(
+        model_name=ModelName.Nuenki_Hybrid,
+        model_company=ModelCompany.Nuenki,
+        inference_service_name=InferenceCompany.Nuenki,
+        inference_source=NuenkiHybridExecutableTranslator(NUENKI_API_KEY),
+        temp=None,
+    ),
     TestedEntry(
         model_name=ModelName.GPT_41,
         model_company=ModelCompany.OpenAI,

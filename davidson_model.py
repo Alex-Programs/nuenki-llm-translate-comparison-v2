@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.optimize import minimize
+from scipy.stats import norm
 
 
 class DavidsonBT:
@@ -10,15 +11,10 @@ class DavidsonBT:
     def __init__(self):
         self.strengths_ = None
         self.tie_param_ = None
+        self.covariance_ = None
 
     @staticmethod
     def build_matrices(comparisons, n_items=None):
-        """
-        Build win and tie count matrices from raw comparisons.
-        comparisons: iterable of (i, j, result) where result is "win1", "win2", or "tie"
-        n_items: total number of items (optional)
-        """
-        # determine number of items
         if n_items is None:
             max_id = max(max(i, j) for i, j, _ in comparisons)
             n_items = max_id + 1
@@ -68,18 +64,33 @@ class DavidsonBT:
         theta0 = np.log(init_strengths) if init_strengths is not None else np.zeros(n)
         tau0 = np.log(init_tie)
         x0 = np.concatenate([theta0, [tau0]])
+
         result = minimize(
             fun=self._neg_log_likelihood,
             x0=x0,
             args=(win_matrix, tie_matrix),
             method="L-BFGS-B",
+            jac=False,
+            hess="2-point",
         )
+        if not result.success:
+            raise RuntimeError("Optimization failed: " + result.message)
+
         opt = result.x
+        hess_inv = (
+            result.hess_inv.todense()
+            if hasattr(result.hess_inv, "todense")
+            else np.linalg.inv(result.hess)
+        )
+        self.covariance_ = hess_inv
+
         pi = np.exp(opt[:n])
         pi /= pi.sum()
         nu = np.exp(opt[n])
+
         self.strengths_ = pi
         self.tie_param_ = nu
+        self._theta_ = opt[:n]  # for CI and p-value use
         return self
 
     def predict_proba(self, i, j):
@@ -95,12 +106,44 @@ class DavidsonBT:
     def get_tie_param(self):
         return self.tie_param_
 
+    def get_confidence_intervals(self, conf_level=0.5):
+        z = norm.ppf(1 - (1 - conf_level) / 2)
+        std_errors = np.sqrt(np.diag(self.covariance_)[: len(self.strengths_)])
+        intervals = []
+        for theta, se in zip(self._theta_, std_errors):
+            low = np.exp(theta - z * se)
+            high = np.exp(theta + z * se)
+            intervals.append((low, np.exp(theta), high))
 
-# example of helper functions
-# comparisons = [
-#     (0, 1, "win1"),
-#     (1, 2, "tie"),
-#     (2, 0, "win2"),
-# ]
-# model = DavidsonBT.from_comparisons(comparisons)
-# print(model.get_strengths(), model.get_tie_param())
+        return intervals
+
+    def pairwise_p_values(self):
+        n = len(self._theta_)
+        cov = self.covariance_[:n, :n]
+        p_values = {}
+        for i in range(n):
+            for j in range(i + 1, n):
+                diff = self._theta_[i] - self._theta_[j]
+                se = np.sqrt(cov[i, i] + cov[j, j] - 2 * cov[i, j])
+                z = diff / se
+                p = 2 * (1 - norm.cdf(abs(z)))
+                p_values[(i, j)] = p
+        return p_values
+
+    def pairwise_p_values_full(self):
+        """
+        Returns { (i, j): p } for all i != j.
+        """
+        basic = self.pairwise_p_values()  # only i<j
+        full = {}
+        n = len(self._theta_)
+        for i in range(n):
+            for j in range(n):
+                if i == j:
+                    continue
+                if i < j:
+                    full[(i, j)] = basic[(i, j)]
+                else:
+                    # symmetry: p(i,j) == p(j,i)
+                    full[(i, j)] = basic[(j, i)]
+        return full

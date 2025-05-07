@@ -20,8 +20,8 @@ class NuenkiHybridExecutableTranslator(AbstractExecutableTranslator):
         response = requests.post(
             self.api_url,
             json={
-                "source_lang": source_lang,
-                "target_lang": target_lang,
+                "source_lang": source_lang.nuenki_code(),
+                "target_lang": target_lang.nuenki_code(),
                 "text": text,
                 "formality": "NormalFormality",
                 "token": self.api_token,
@@ -29,4 +29,5 @@ class NuenkiHybridExecutableTranslator(AbstractExecutableTranslator):
         )
 
         result = response.json()
+        print(result)
         return [x for x in result["translations"] if x["combined"]][0]["text"]

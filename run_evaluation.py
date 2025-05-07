@@ -4,6 +4,14 @@ from dataset import SENTENCES_LIST
 from typedefinitions import *
 from davidson_model import DavidsonBT
 from latency_logger import log_latency
+from itertools import combinations
+
+
+def all_non_duplicate_sets(lst):
+    result = []
+    for r in range(1, len(lst) + 1):
+        result.extend([list(c) for c in combinations(lst, r)])
+    return result
 
 
 def pair_every(pairwise_items, input_data, start, interval, limit):
@@ -168,16 +176,17 @@ def compare_set(language, model_a, model_b, cache, compare_models):
                         model_a_translation,
                     )
 
-                comparison_prompt = f"""You're a translation expert. Compare two translations of the same sentence.
+                comparison_prompt = f"""You're an unforgiving professional translator. Compare two translations of the same sentence.
 Your gold standard is the idiomatic, native, absolutely correct style found in a high‑quality language‑learning textbook.
-Think step-by-step in **VERY** short notes (20–200 words), e.g. "A is more accurate. B uses more idiomatic phrasing. B uses 'Schlecht' incorrectly." Nobody will read them, so don't use fancy styling: They are merely your own chain of thought.
-Evaluate, in approx. priority high-to-low:
-- Accuracy (Same meaning conferred?)
-- Idiomaticity & style (native phrasing? Matches the desired style?)
-- Correct vocab
-- Correct grammar
+Think step-by-step in *only a few words per point**, like "A is more accurate at 'Hallo'. B is more idiomatic. B misuses 'Schlecht'." DO NOT use long explanations. Just fast notes for yourself. Save tokens.
+Evaluate, in priority high-to-low:
+- Accuracy (Same meaning?)
+- Idiomaticity & style (native phrasing? Matches language-textbook style?)
+- Vocab
+- Grammar
 - Consistency in formality
-Compare A and B as you go. On a **new line**, write only `Translation A`, `Translation B`, or `Identical` to show which is better.
+Downrank English loanwords where direct equivalents exist.
+Be critical. On a **new line**, write only `Translation A`, `Translation B`, or `Identical` to show which is better. Remember priorities when tiebreaking.
 
 Original: ```{sentence}```
 A: ```{model_a_translation}```
@@ -193,9 +202,16 @@ B: ```{model_b_translation}```"""
                         print("Cache hit")
                     else:
                         print("Inference for comparison")
-                        comparison_data = comparison_inference.infer(
-                            comparison_prompt, 0
-                        )
+                        for i in range(10):
+                            try:
+                                comparison_data = comparison_inference.infer(
+                                    comparison_prompt, 0
+                                )
+                                if comparison_data:
+                                    break
+                            except Exception as e:
+                                print("Error during inference:", e)
+                                time.sleep(i*20)
 
                     print("Comparison data", comparison_data)
                     last_line_unswapped = (
@@ -377,10 +393,9 @@ def evaluate_datasets(target_languages, target_models, cache, compare_models):
             for comparison in comparison_set["comparisons"]:
                 comparison_items.append(comparison)
 
-        model = produce_model_from_dataset(id_model_pairs, comparison_items)
-
-        scores = product_rankings_from_strengths(id_model_pairs, model.get_strengths())
-        print_scores(scores)
+        model_base = produce_model_from_dataset(id_model_pairs, comparison_items)
+        base_data = produce_sane_data_from_model(id_model_pairs, model_base)
+        print(base_data)
 
         ### AMPLIFICATION VARIANT ###
         comparison_items_amplified_synthetic = amplify(
@@ -389,11 +404,21 @@ def evaluate_datasets(target_languages, target_models, cache, compare_models):
         model_amplified = produce_model_from_dataset(
             id_model_pairs, comparison_items_amplified_synthetic
         )
-        scores = product_rankings_from_strengths(
-            id_model_pairs, model_amplified.get_strengths()
-        )
-        print("Amplified")
-        print_scores(scores)
+        amplified_data = produce_sane_data_from_model(id_model_pairs, model_base)
+        print(amplified_data)
+
+        judge_names = [x for x, y in compare_models]
+
+        out = {
+            "judges": judge_names,
+            "base": base_data,
+            "amplified": amplified_data,
+            "judges_comb": [],
+        }
+
+        judge_combs = all_non_duplicate_sets(judge_names)
+
+        print_consensus_score_by_sentence_type(comparison_set["comparisons"])
 
         # various variants we want to generate:
         # - standard with signal amplification and noise reduction: yes, we do keep individual comparison, but
@@ -407,22 +432,50 @@ def evaluate_datasets(target_languages, target_models, cache, compare_models):
         # ALL of that, but sorted by sentence types (yeah we're going to want to make it modular)
 
 
+def print_consensus_score_by_sentence_type(comparisons):
+    grouped_equal_comparisons = produce_grouped_equal_comparisons(comparisons)
+    for sentence_type in SENTENCES_LIST.keys():
+        print("Sentence Type:", sentence_type)
+        num = 0
+        denom = 0
+        for equal_comp in grouped_equal_comparisons.values():
+            if equal_comp[0].sentence_category == sentence_type:
+                amount_a = len([x for x in equal_comp if x.a_success])
+                amount_b = len([x for x in equal_comp if x.b_success])
+                amount_identical = len([x for x in equal_comp if x.identical])
+
+                consensus_score = abs(amount_a - amount_b) - (amount_identical * 0.5)
+                print(consensus_score)
+                num += consensus_score
+                denom += 1
+
+        print("Avg", str(num * 100 / denom))
+
+
+def produce_grouped_equal_comparisons(comparisons):
+    grouped_equal_comparisons = {}
+    for comparison in comparisons:
+        key = (
+            comparison.sentence
+            + "|"
+            + comparison.tested_entry_a.unique_id()
+            + "|"
+            + comparison.tested_entry_b.unique_id()
+        )
+        if key not in grouped_equal_comparisons.keys():
+            grouped_equal_comparisons[key] = []
+
+        grouped_equal_comparisons[key].append(comparison)
+
+    return grouped_equal_comparisons
+
+
 def amplify(relevant_comparison_sets, language):
     synthetic_comparison_items_amplified = []
     for comparison_set in relevant_comparison_sets:
-        grouped_equal_comparisons = {}
-        for comparison in comparison_set["comparisons"]:
-            key = (
-                comparison.sentence
-                + "|"
-                + comparison.tested_entry_a.unique_id()
-                + "|"
-                + comparison.tested_entry_b.unique_id()
-            )
-            if key not in grouped_equal_comparisons.keys():
-                grouped_equal_comparisons[key] = []
-
-            grouped_equal_comparisons[key].append(comparison)
+        grouped_equal_comparisons = produce_grouped_equal_comparisons(
+            comparison_set["comparisons"]
+        )
 
         for key, grouped in grouped_equal_comparisons.items():
             a_quant = len([x for x in grouped if x.a_success])
@@ -507,7 +560,7 @@ def produce_model_from_dataset(id_model_pairs, actual_comparisons):
     return model
 
 
-def product_rankings_from_strengths(id_model_pairs, strengths):
+def produce_rankings_from_strengths(id_model_pairs, strengths):
     i = 0
     scores = []
     for strength in strengths:
@@ -520,9 +573,45 @@ def product_rankings_from_strengths(id_model_pairs, strengths):
     return scores_sorted
 
 
+def produce_sane_data_from_model(id_model_pairs, model):
+    sane_models_storage = []
+    strengths_intervals = model.get_confidence_intervals()
+
+    i = 0
+    for low, mid, high in strengths_intervals:
+        corresponding = [b for a, b in id_model_pairs if a == i][0]
+        sane_models_storage.append(
+            {
+                "model": corresponding.dump_data(),
+                "model_id": i,
+                "intervals_95": {
+                    "low": low,
+                    "mid": mid,
+                    "high": high,
+                },
+                "p_vals": {},
+            }
+        )
+
+        i += 1
+
+    sane_models_storage = sorted(
+        sane_models_storage, key=lambda x: x["intervals_95"]["mid"]
+    )
+
+    p_vals = model.pairwise_p_values_full()
+
+    for (k, v), p in p_vals.items():
+        for m in sane_models_storage:
+            if m["model_id"] == k:
+                m["p_vals"][v] = p
+
+    return sane_models_storage
+
+
 def print_scores(scores):
     for score, item in scores:
         print("----------" * 4)
         print(
-            f"{score}:\t\t{item.model_name}:{item.temp} ({item.model_company} via {item.inference_source})"
+            f"{round(score, 3)} ():\t\t{item.model_name}:{item.temp} ({item.model_company} via {item.inference_source})"
         )

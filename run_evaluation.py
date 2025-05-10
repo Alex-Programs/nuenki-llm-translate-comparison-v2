@@ -181,16 +181,21 @@ def process_sentence(
             )
 
         comparison_prompt = f"""You're an unforgiving professional translator. Compare two translations of the same sentence.
-Your gold standard is the idiomatic, native, absolutely correct style found in a high‑quality language‑learning textbook.
-Think step-by-step in *only a few words per point**, like "A is more accurate at 'Hallo'. B is more idiomatic. B misuses 'Schlecht'." DO NOT use long explanations. Just fast notes for yourself. Save tokens.
-Evaluate, in priority high-to-low:
+IGNORE subjective or arguable style differences (e.g. using a common or technical English loan word; passive vs active voice). If a choice can be reasonably defended as a subjective but valid choice, do not criticise it. Prefer natural translations over literal ones that sound non-native.
+
+Think step-by-step in *only a few words per point*, like "A better at 'Hallo'. B more idiomatic. B misuses 'Schlecht'." AVOID VERBOSITY. Just terse, for yourself. Save tokens.
+
+Evaluate in order of priority (high-to-low):
 - Accuracy (Same meaning?)
-- Idiomaticity & style (native phrasing? Matches language-textbook style?)
-- Vocab
-- Grammar
-- Consistency in formality
-Downrank English loanwords where direct equivalents exist.
-Be critical. On a **new line**, write only `Translation A`, `Translation B`, or `Identical` to show which is better. Remember priorities when tiebreaking.
+- Vocab (Check for any mistakes, however subtle)
+- Grammar accuracy
+- Tone (does it match the original?)
+- *Consistency* in formality, both within the translation and compared to the original
+- Idiomaticity & style (native phrasing? Remember, no stylistic judgements)
+Remember priorities when tiebreaking.
+
+If equally good or identical, say `Identical`. On a **new line**, output ONLY:
+`Translation A`, `Translation B`, or `Identical`.
 
 Original: ```{sentence}```
 A: ```{model_a_translation}```
@@ -368,12 +373,12 @@ def evaluate_datasets(target_languages, target_models, cache, compare_models):
     for a, b in zip(target_models, target_models[1:]):
         pairwise_items.append((a, b))
 
-    pair_every(pairwise_items, target_models, 3, 5, 999)
-    pair_every(pairwise_items, target_models, 0, 6, 999)
-    pair_every(pairwise_items, target_models, 3, 18, 999)
-    pair_every(pairwise_items, target_models, 5, 24, 999)
-    pair_every(pairwise_items, target_models, 0, 2, 4)
-    pair_every(pairwise_items, target_models, 1, 3, 6)
+    # pair_every(pairwise_items, target_models, 3, 5, 999)
+    # pair_every(pairwise_items, target_models, 0, 6, 999)
+    # pair_every(pairwise_items, target_models, 3, 18, 999)
+    # pair_every(pairwise_items, target_models, 5, 24, 999)
+    # pair_every(pairwise_items, target_models, 0, 2, 4)
+    # pair_every(pairwise_items, target_models, 1, 3, 6)
 
     print("Pairwise length before dedup", len(pairwise_items))
     dedup_pairwise = []
@@ -392,6 +397,8 @@ def evaluate_datasets(target_languages, target_models, cache, compare_models):
     from concurrent.futures import ThreadPoolExecutor, as_completed
 
     compare_sets = []
+
+    pairwise_log = set()
 
     for i, language in enumerate(target_languages):
         futures = []
@@ -423,6 +430,87 @@ def evaluate_datasets(target_languages, target_models, cache, compare_models):
                     "comparisons": comparisons,
                 }
                 compare_sets.append(to_add)
+                pairwise_log.add((model_a, model_b))
+
+    TARGET_P = 0.5
+    while True:
+        # work out which ones need to be compared
+        pairs_info = []  # (language, model_a, model_b)
+        for i, language in enumerate(target_languages):
+            print("Target-iteration over", language)
+
+            relevant_comparison_sets = [
+                x for x in compare_sets if x["language"] == language
+            ]
+            id_model_pairs = produce_id_model_pairs(relevant_comparison_sets)
+
+            comparison_items = []
+            for comparison_set in relevant_comparison_sets:
+                for comparison in comparison_set["comparisons"]:
+                    comparison_items.append(comparison)
+
+            print("Fitting...")
+            model_base = produce_model_from_dataset(id_model_pairs, comparison_items)
+            base_data = produce_sane_data_from_model(id_model_pairs, model_base)
+            print("Fit and processed iterative model")
+
+            highest_p_pair_val = None
+            highest_pair_model_a = None
+            highest_pair_model_b = None
+
+            for item in base_data:
+                for index, p_val in item["p_vals"].items():
+                    if highest_p_pair_val == None or p_val > highest_p_pair_val:
+                        pair_model_a_tmp = [
+                            b for a, b in id_model_pairs if a == item["model_id"]
+                        ][0]
+                        pair_model_b_tmp = [b for a, b in id_model_pairs if a == index][
+                            0
+                        ]
+
+                        if (
+                            (pair_model_a_tmp, pair_model_b_tmp)
+                        ) not in pairwise_log and (
+                            (pair_model_b_tmp, pair_model_a_tmp)
+                        ) not in pairwise_log:
+                            highest_p_pair_val = p_val
+                            highest_pair_model_a = pair_model_a_tmp
+                            highest_pair_model_b = pair_model_b_tmp
+
+                        highest_p_pair_val = p_val
+
+            if highest_p_pair_val < TARGET_P:
+                continue
+
+            print(
+                "Targeting",
+                highest_p_pair_val,
+                highest_pair_model_a,
+                highest_pair_model_b,
+            )
+
+            pairs_info.append((language, highest_pair_model_a, highest_pair_model_b))
+
+        print("Pairs info", pairs_info)
+
+        if len(pairs_info) == 0:
+            break
+
+        for item in pairs_info:
+            lang, model_a, model_b = item
+
+            comparison_data_resp = compare_set(
+                lang, model_a, model_b, cache, compare_models
+            )
+
+            to_add = {
+                "language": language,
+                "model_a": model_a,
+                "model_b": model_b,
+                "comparisons": comparison_data_resp,
+            }
+            compare_sets.append(to_add)
+            pairwise_log.add((model_a, model_b))
 
     # Now build the rankings...
     langs_results = []
@@ -434,20 +522,7 @@ def evaluate_datasets(target_languages, target_models, cache, compare_models):
 
         # first: simple multi-unit consensus
         # let's produce a graph...
-        id_model_pairs = []
-        current_id = 0
-
-        for comparison_set in relevant_comparison_sets:
-            existing_models = [b for a, b in id_model_pairs]
-
-            if comparison_set["model_a"] not in existing_models:
-                id_model_pairs.append((current_id, comparison_set["model_a"]))
-                current_id += 1
-
-            if comparison_set["model_b"] not in existing_models:
-                id_model_pairs.append((current_id, comparison_set["model_b"]))
-                current_id += 1
-
+        id_model_pairs = produce_id_model_pairs(relevant_comparison_sets)
         print("ID-model pairs: ", id_model_pairs)
 
         comparison_items = []
@@ -538,6 +613,24 @@ def evaluate_datasets(target_languages, target_models, cache, compare_models):
         # ALL of that, but sorted by sentence types (yeah we're going to want to make it modular)
 
     return langs_results
+
+
+def produce_id_model_pairs(relevant_comparison_sets):
+    id_model_pairs = []
+    current_id = 0
+
+    for comparison_set in relevant_comparison_sets:
+        existing_models = [b for a, b in id_model_pairs]
+
+        if comparison_set["model_a"] not in existing_models:
+            id_model_pairs.append((current_id, comparison_set["model_a"]))
+            current_id += 1
+
+        if comparison_set["model_b"] not in existing_models:
+            id_model_pairs.append((current_id, comparison_set["model_b"]))
+            current_id += 1
+
+    return id_model_pairs
 
 
 def print_consensus_score_by_sentence_type(comparisons):

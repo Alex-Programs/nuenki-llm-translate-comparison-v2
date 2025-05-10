@@ -22,6 +22,7 @@ SENTENCES_LIST = {
         "Installed Apps",
         "Help and FAQ",
         "Terms of Service",
+        "Subscribe to Premium",
     ],
     "short_sentence": [
         "This isn’t what I ordered.",  # wrote myself

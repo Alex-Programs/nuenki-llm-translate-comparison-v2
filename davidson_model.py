@@ -147,3 +147,74 @@ class DavidsonBT:
                     # symmetry: p(i,j) == p(j,i)
                     full[(i, j)] = basic[(j, i)]
         return full
+
+    def rank_pairwise_by_entropy(self):
+        n = len(self.strengths_)
+        pairs = []
+        for i in range(n):
+            for j in range(i + 1, n):
+                p1, p2, ptie = self.predict_proba(i, j)
+                ent = -(
+                    p1 * np.log(p1 + 1e-12)
+                    + p2 * np.log(p2 + 1e-12)
+                    + ptie * np.log(ptie + 1e-12)
+                )
+                pairs.append((i, j, ent))
+        return sorted(pairs, key=lambda x: -x[2])
+
+
+if __name__ == "__main__":
+
+    def approx_equal(a, b, tol=1e-6):
+        return abs(a - b) < tol
+
+    print("Running DavidsonBT unit tests...")
+
+    # Test build_matrices
+    print("Test build_matrices...")
+    comps = [(0, 1, "win1"), (1, 2, "tie"), (2, 0, "win2")]
+    win, tie = DavidsonBT.build_matrices(comps, n_items=3)
+    assert win.shape == (3, 3)
+    assert tie.shape == (3, 3)
+    assert win[0, 1] == 1
+    assert win[0, 2] == 1  # from win2 on (2,0)
+    assert tie[1, 2] == 1
+    print(" build_matrices PASS")
+
+    # Test from_comparisons and predict_proba sum-to-one
+    print("Test from_comparisons and predict_proba...")
+    # no comparisons => uniform strengths, nu=1
+    empty_model = DavidsonBT.from_comparisons([], n_items=3)
+    p01 = empty_model.predict_proba(0, 1)
+    total = sum(p01)
+    assert approx_equal(total, 1.0)
+    # symmetry
+    p10 = empty_model.predict_proba(1, 0)
+    assert approx_equal(p01[0], p10[1])
+    print(" from_comparisons and predict_proba PASS")
+
+    # Test pairwise_p_values_full symmetry and keys
+    print("Test pairwise_p_values_full...")
+    # create trivial model where theta equal => p-values = 1
+    trivial = empty_model
+    pfull = trivial.pairwise_p_values_full()
+    for (i, j), p in pfull.items():
+        assert 0 <= p <= 1
+        assert approx_equal(pfull[(j, i)], p)
+    expected_pairs = [(i, j) for i in range(3) for j in range(3) if i != j]
+    assert set(pfull.keys()) == set(expected_pairs)
+    print(" pairwise_p_values_full PASS")
+
+    # Test rank_pairwise_by_entropy ordering and count
+    print("Test rank_pairwise_by_entropy...")
+    ent_pairs = empty_model.rank_pairwise_by_entropy()
+    # for 3 items, expect 3 pairs
+    assert len(ent_pairs) == 3
+    # entropies should be equal for uniform model
+    ents = [e for (_, _, e) in ent_pairs]
+    assert all(approx_equal(ents[0], e) for e in ents)
+    # sorted descending
+    assert ents == sorted(ents, reverse=True)
+    print(" rank_pairwise_by_entropy PASS")
+
+    print("All tests passed!")

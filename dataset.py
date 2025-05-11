@@ -23,10 +23,15 @@ SENTENCES_LIST = {
         "Help and FAQ",
         "Terms of Service",
         "Subscribe to Premium",
+        "Helldivers II: A Cup of Liber Tea",  # the "Liber Tea" is an interesting test
+        "Additional Notes",  # header
     ],
     "short_sentence": [
         "This isn’t what I ordered.",  # wrote myself
         "Hover to translate back!",
+        "The Gloucester cheese rolling event is later this month",  # me
+        "incredible things are happening in my inbox",  # me, discord
+        'Visual representation of the word "skedaddle"',  # twitter post
         "The best translator is a hybrid translator",  # internet
         "Will this be available to download on GitHub?",
         "It doesn't matter now.",  # wrote myself
@@ -40,8 +45,19 @@ SENTENCES_LIST = {
         "IDEA: Use AI (with tool use) to solve ciphers",  # also from my notes
         "Only third of Britons want increase in defence spending, poll finds",
         "This performance is adequate for small webpages but scales poorly.",
+        "So, what's next?",
+        "It feels like the main menu is telling me a story.",  # https://www.youtube.com/watch?v=sE0huJeEgZI comments
+        "Reminder about mayoral elections btw",  # me, in discord
+        "gimme the entire binomial equation",  # me, in chatgpt, working out permutations for this :)
+        "and how are you calculating that?",
+        "Contributions to open source projects that interest me.",  # my github
+        "You may be looking for",
+        "Looking for something else?",
+        "This site is unfinished.",
+        "I'm a programmer and student.",
     ],
     "medium_sentence": [
+        "In the very last update, I noticed that the right-click menu is translucent.",  # discord
         "And a few things I think would be cool, but aren't core to the idea:",  # from r foxhole
         "Hell, just the fact that there's 3 officer uniforms in one picture is funny enough to me.",
         "The risk was calculated, but the variables were bollocks.",  # added swearing to a somewhat common meme-phrase
@@ -56,6 +72,7 @@ SENTENCES_LIST = {
         "I can learn a lot from how the firewall developed in this period",  # a level compsci again
         "I can enjoy my online time guilt free, knowing I'm also learning a new language.",  # cemonds quote on nuenki landing page
         "In addition to querying every sentence in every webpage, Nuenki also extensively uses them in its sentence-difficulty estimation.",  # nuenki blog post
+        "Honestly, though, this data is so noisy that it's not worth drawing any conclusions from.",
     ],
     "long_sentence": [
         'The woman said she quit her job because she felt "unpopular", partly because of a Star Wars personality test, and yet tried to also sue the company for "unfair dismissal".',  # https://www.reddit.com/r/unitedkingdom/comments/1kgv5us/comment/mr1v8qq/
@@ -74,6 +91,8 @@ SENTENCES_LIST = {
         "For non methamticians, this is going to be tougher than the previous material, and you should expect to spend a long time studying the next two parts.",  # meme with some changes
         'To deal with hyperplanes in a 14-dimensional space, visualise a 3 dimensional space and say "fourteen" rather loudly.',  # ^
         "All the instrumentation remained on the Javascript side. I was surprised by how fast the WASM calls were - I expected the FFI (Foreign Function Interface) overhead to limit the performance improvements.",
+        "Conduct fixed comparisons, then start iteratively fitting the model and comparing the two worst p-values until confidence is achieved.",
+        "I'm using this website to catalogue my projects - not because they're particularly interesting, but because I enjoy writing and it's useful to have a record of the things I've done.",  # my personal site
     ],
     "paragraph": [
         "I built that, and made it open source. It turns out that you can! While its coherence is slightly lower than its peers (more on that in a moment), it is the most idiomatic model while also being far more consistent, with a much lower standard deviation across all three metrics. It works by taking the top 3-4 models for a given language (based on this research), translating with them, then having a judge model (currently redacted) consider the strengths and weaknesses of each translation and merge them together in an idiomatic way.",  # from https://nuenki.app/blog/the_best_translator_is_a_hybrid_translator, except I replaced "GPT-4.1" with "redacted" because I felt mentioning specific models would do little to help the "model-lineage-bias" issue!
@@ -88,5 +107,6 @@ SENTENCES_LIST = {
         "Either way, since the very first network censors have existed, there have been people trying to circumvent them. The techniques of censorship and circumvention have rapidly advanced in a continually evolving arms race. In 2006 the most advanced censorship apparatus at the time, the Great Firewall of China (GFW), could be bypassed by simply bilaterally ignoring the injected TCP connection resets [4]. By 2011 the GFW was actively probing suspected servers [5] and by 2021 it was analyzing the entropy of traffic to catch fully-encrypted protocols [6]. And permitted protocols aren’t safe either: The GFW has analysed the exterior dataflow of SSH connections using machine learning (ML) to detect and block SSH tunnels since at least 2016 [7]",  # A level computer science project!
         "The Noise Protocol is too high-level for my use case and may provide a fingerprinting vector. Cryptographic primitives originating from China are clearly undesirable due to the risk of backdoors.",  # again, a level compsci
         "It's less about cost, more about latency. It already uses Claude and Llama for translating text that isn't yet visible (precisely because of cost), but they're just too slow. They'd probably be better if I hosted them myself, but I can't justify the massive fixed cost for that at the moment. I am curious though, would you be alright with higher latency if it meant the sentences included context?",  # nuenki discord
+        """It raises concerns about how scientific it is to run a dynamic algorithm, rather than simply calculating a fixed batch of comparisons then fitting a model to them. Nevertheless, it may well produce much better results, and I can't think of any concrete statistical flaws with it provided we're careful about ensuring a minimum amount of linkage.""",  # nuenki blog post
     ],
 }

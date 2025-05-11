@@ -159,16 +159,16 @@ evaluation_targets_sensible_large_temp0_nothink = [
         temp=0.0,
         thinking="Off",
     ),
-    TestedEntry(
-        model_name=ModelName.Qwen3_14b,
-        model_company=ModelCompany.Alibaba,
-        inference_service_name=InferenceCompany.Openrouter,
-        inference_source=OpenrouterExecutableTranslator(
-            OPENROUTER_API_KEY, "qwen/qwen3-14b", also_add="/no_think\n"
-        ),
-        temp=0,
-        thinking="Off",
-    ),
+    # TestedEntry(
+    #    model_name=ModelName.Qwen3_14b,
+    #    model_company=ModelCompany.Alibaba,
+    #    inference_service_name=InferenceCompany.Openrouter,
+    #    inference_source=OpenrouterExecutableTranslator(
+    #        OPENROUTER_API_KEY, "qwen/qwen3-14b", also_add="/no_think\n"
+    #    ),
+    #    temp=0,
+    #    thinking="Off",
+    # ),
     TestedEntry(
         model_name=ModelName.Llama_4_Maverick,
         model_company=ModelCompany.Meta,

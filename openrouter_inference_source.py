@@ -32,6 +32,7 @@ class OpenrouterExecutableTranslator(AbstractExecutableTranslator):
         payload = {
             "model": self.model_slug,
             "temperature": temperature,
+            "max_tokens": 3000,
             "messages": [{"role": "user", "content": prompt}],
         }
 
@@ -60,6 +61,7 @@ class OpenrouterGenericInference(AbstractGenericInference):
         payload = {
             "model": self.model_slug,
             "temperature": temperature,
+            "max_tokens": 3000,
             "messages": [
                 {"role": "user", "content": user_prompt},
             ],

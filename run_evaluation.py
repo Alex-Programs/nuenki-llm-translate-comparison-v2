@@ -194,138 +194,151 @@ Evaluate in order of priority (high-to-low):
 - Idiomaticity & style (native phrasing? Remember, no stylistic judgements)
 Remember priorities when tiebreaking.
 
-If equally good or identical, say `Identical`. On a **new line**, output ONLY:
+If equally good (unable to decide) or identical, say `Identical`. On a **new line**, output ONLY:
 `Translation A`, `Translation B`, or `Identical`.
 
 Original: ```{sentence}```
 A: ```{model_a_translation}```
 B: ```{model_b_translation}```"""
 
-        for i in range(0, 4):
-            key = (
-                f"COMPARISON hash:{md5hash(comparison_prompt)} Model:{comparison_model}"
-            )
-            print("KEY", key)
-            comparison_data = None
+        key = f"COMPARISON hash:{md5hash(comparison_prompt)} Model:{comparison_model}"
+        print("KEY", key)
+        comparison_data = None
 
-            if cache.get(key):
-                comparison_data = cache.get(key)
-                print("Cache hit")
-            else:
-                print("Inference for comparison")
-                for i in range(10):
-                    try:
-                        comparison_data = comparison_inference.infer(
-                            comparison_prompt, 0
-                        )
-                        if comparison_data:
-                            break
-                    except Exception as e:
-                        print("Error during inference:", e)
-                        time.sleep(i * choice(range(5, 25)))
+        if cache.get(key):
+            comparison_data = cache.get(key)
+            print("Cache hit")
+        else:
+            print("Inference for comparison")
+            for i in range(10):
+                try:
+                    comparison_data = comparison_inference.infer(comparison_prompt, 0)
+                    if comparison_data:
+                        break
+                except Exception as e:
+                    print("Error during inference:", e)
+                    time.sleep(i * choice(range(5, 25)))
 
-            print("Comparison data", comparison_data)
-            last_line_unswapped = comparison_data.strip().split("\n")[-1].strip()
+        print("Comparison data", comparison_data)
+        last_line_unswapped = comparison_data.strip().split("\n")[-1].strip()
+        if (
+            not "Translation" in last_line_unswapped
+            and not "Identical" in last_line_unswapped
+        ):
+            penul = comparison_data.strip().split("\n")[-2].strip()
             if (
-                not "Translation" in last_line_unswapped
-                and not "Identical" in last_line_unswapped
+                "Translation" in penul
+                or "Identical" in penul
                 and "(Note:" in last_line_unswapped
-                and (
-                    "Translation" in comparison_data.strip().split("\n")[-2].strip()
-                    or "Identical" in comparison_data.strip().split("\n")[-2].strip()
-                )
             ):
                 # fix gemini being stupid without a rerun
-                last_line_unswapped = comparison_data.strip().split("\n")[-2].strip()
-
-            print("Last line unswapped", last_line_unswapped)
-            if swap_a_b:
-                last_line = last_line_unswapped
-                last_line = last_line.replace("Translation A", "tempA!!!000")
-                last_line = last_line.replace("Translation B", "tempB!!!000")
-                last_line = last_line.replace("tempA!!!000", "Translation B")
-                last_line = last_line.replace("tempB!!!000", "Translation A")
-                print("Swapped: ", last_line)
-
-                model_a_translation, model_b_translation = (
-                    model_b_translation,
-                    model_a_translation,
-                )
+                last_line_unswapped = penul
             else:
-                last_line = last_line_unswapped
-
-            hit_count = 0
-            if "Translation A" in last_line:
-                hit_count += 1
-            if "Translation B" in last_line:
-                hit_count += 1
-            if "Identical" in last_line:
-                hit_count += 1
-
-            if hit_count > 1:
-                # invalid!
-                print("Reports for multiple in response: " + str(comparison_data))
-                continue
-
-            if "Translation A" in last_line:
-                cache.set(key, comparison_data)
-                output_queue.put(
-                    ComparisonItem(
-                        language=language,
-                        tested_entry_a=model_a,
-                        tested_entry_b=model_b,
-                        sentence=sentence,
-                        sentence_category=category,
-                        evaluating_model=comparison_model,
-                        entry_a_translation=model_a_translation,
-                        entry_b_translation=model_b_translation,
-                        a_success=True,
-                        b_success=False,
-                        identical=False,
-                        evaluating_response=comparison_data,
-                    )
+                print(
+                    f"TRY REPLACE: LAST LINE UNSWAPPED BEFORE: `{last_line_unswapped}`"
                 )
-                break
-            elif "Translation B" in last_line:
-                cache.set(key, comparison_data)
-                output_queue.put(
-                    ComparisonItem(
-                        language=language,
-                        tested_entry_a=model_a,
-                        tested_entry_b=model_b,
-                        sentence=sentence,
-                        sentence_category=category,
-                        evaluating_model=comparison_model,
-                        entry_a_translation=model_a_translation,
-                        entry_b_translation=model_b_translation,
-                        a_success=False,
-                        b_success=True,
-                        identical=False,
-                        evaluating_response=comparison_data,
-                    )
+                # try to fix it this way...
+                last_line_unswapped = last_line_unswapped.replace(
+                    "B.", "Translation B"
+                ).replace("A.", "Translation A")
+
+                if last_line_unswapped == "A":
+                    last_line_unswapped = "Translation A"
+                elif last_line_unswapped == "B":
+                    last_line_unswapped = "Translation B"
+
+                print(
+                    f"TRY REPLACE: LAST LINE UNSWAPPED AFTER: `{last_line_unswapped}`"
                 )
-                break
-            elif "Identical" in last_line:
-                cache.set(key, comparison_data)
-                output_queue.put(
-                    ComparisonItem(
-                        language=language,
-                        tested_entry_a=model_a,
-                        tested_entry_b=model_b,
-                        sentence=sentence,
-                        sentence_category=category,
-                        evaluating_model=comparison_model,
-                        entry_a_translation=model_a_translation,
-                        entry_b_translation=model_b_translation,
-                        a_success=False,
-                        b_success=False,
-                        identical=True,
-                        evaluating_response=comparison_data,
-                    )
+
+        print("Last line unswapped", last_line_unswapped)
+        if swap_a_b:
+            last_line = last_line_unswapped
+            last_line = last_line.replace("Translation A", "tempA!!!000")
+            last_line = last_line.replace("Translation B", "tempB!!!000")
+            last_line = last_line.replace("tempA!!!000", "Translation B")
+            last_line = last_line.replace("tempB!!!000", "Translation A")
+            print("Swapped: ", last_line)
+
+            model_a_translation, model_b_translation = (
+                model_b_translation,
+                model_a_translation,
+            )
+        else:
+            last_line = last_line_unswapped
+
+        hit_count = 0
+        if "Translation A" in last_line:
+            hit_count += 1
+        if "Translation B" in last_line:
+            hit_count += 1
+        if "Identical" in last_line:
+            hit_count += 1
+
+        if hit_count > 1:
+            # invalid!
+            print("Reports for multiple in response: " + str(comparison_data))
+            continue
+
+        if "Translation A" in last_line:
+            cache.set(key, comparison_data)
+            output_queue.put(
+                ComparisonItem(
+                    language=language,
+                    tested_entry_a=model_a,
+                    tested_entry_b=model_b,
+                    sentence=sentence,
+                    sentence_category=category,
+                    evaluating_model=comparison_model,
+                    entry_a_translation=model_a_translation,
+                    entry_b_translation=model_b_translation,
+                    a_success=True,
+                    b_success=False,
+                    identical=False,
+                    evaluating_response=comparison_data,
                 )
-                break
-            else:
-                print("Cannot get selection from: ", comparison_data)
+            )
+            break
+        elif "Translation B" in last_line:
+            cache.set(key, comparison_data)
+            output_queue.put(
+                ComparisonItem(
+                    language=language,
+                    tested_entry_a=model_a,
+                    tested_entry_b=model_b,
+                    sentence=sentence,
+                    sentence_category=category,
+                    evaluating_model=comparison_model,
+                    entry_a_translation=model_a_translation,
+                    entry_b_translation=model_b_translation,
+                    a_success=False,
+                    b_success=True,
+                    identical=False,
+                    evaluating_response=comparison_data,
+                )
+            )
+            break
+        elif "Identical" in last_line:
+            cache.set(key, comparison_data)
+            output_queue.put(
+                ComparisonItem(
+                    language=language,
+                    tested_entry_a=model_a,
+                    tested_entry_b=model_b,
+                    sentence=sentence,
+                    sentence_category=category,
+                    evaluating_model=comparison_model,
+                    entry_a_translation=model_a_translation,
+                    entry_b_translation=model_b_translation,
+                    a_success=False,
+                    b_success=False,
+                    identical=True,
+                    evaluating_response=comparison_data,
+                )
+            )
+            break
+        else:
+            print("Cannot get selection from: ", comparison_data)
 
 
 def compare_set(language, model_a, model_b, cache, compare_models):
@@ -398,7 +411,7 @@ def evaluate_datasets(target_languages, target_models, cache, compare_models):
 
     compare_sets = []
 
-    pairwise_log = set()
+    pairwise_log = []
 
     for i, language in enumerate(target_languages):
         futures = []
@@ -430,87 +443,82 @@ def evaluate_datasets(target_languages, target_models, cache, compare_models):
                     "comparisons": comparisons,
                 }
                 compare_sets.append(to_add)
-                pairwise_log.add((model_a, model_b))
+                pairwise_log.append((model_a, model_b))
 
-    TARGET_P = 0.5
+    # iterative active learning loop using entropy
+
+    MIN_ENTROPY = 0.5
+
+    print(len(pairwise_log))
+
     while True:
-        # work out which ones need to be compared
         pairs_info = []  # (language, model_a, model_b)
-        for i, language in enumerate(target_languages):
+
+        for language in target_languages:
             print("Target-iteration over", language)
 
-            relevant_comparison_sets = [
-                x for x in compare_sets if x["language"] == language
-            ]
-            id_model_pairs = produce_id_model_pairs(relevant_comparison_sets)
+            relevant_sets = [x for x in compare_sets if x["language"] == language]
+            id_model_pairs = produce_id_model_pairs(relevant_sets)
 
             comparison_items = []
-            for comparison_set in relevant_comparison_sets:
-                for comparison in comparison_set["comparisons"]:
-                    comparison_items.append(comparison)
+            for cs in relevant_sets:
+                comparison_items.extend(cs["comparisons"])
 
             print("Fitting...")
             model_base = produce_model_from_dataset(id_model_pairs, comparison_items)
-            base_data = produce_sane_data_from_model(id_model_pairs, model_base)
-            print("Fit and processed iterative model")
+            print("Fit iterative model")
 
-            highest_p_pair_val = None
-            highest_pair_model_a = None
-            highest_pair_model_b = None
+            # map id -> model
+            id_to_model = dict(id_model_pairs)
 
-            for item in base_data:
-                for index, p_val in item["p_vals"].items():
-                    if highest_p_pair_val == None or p_val > highest_p_pair_val:
-                        pair_model_a_tmp = [
-                            b for a, b in id_model_pairs if a == item["model_id"]
-                        ][0]
-                        pair_model_b_tmp = [b for a, b in id_model_pairs if a == index][
-                            0
-                        ]
+            # pick highest-entropy untested pair
+            for id_a, id_b, entropy in model_base.rank_pairwise_by_entropy():
+                print("Ent", entropy)
+                if entropy < MIN_ENTROPY:
+                    print(
+                        "Skipping",
+                        id_a,
+                        id_b,
+                        "due to entropy",
+                        entropy,
+                        "below minimum",
+                        MIN_ENTROPY,
+                    )
+                    continue
 
-                        if (
-                            (pair_model_a_tmp, pair_model_b_tmp)
-                        ) not in pairwise_log and (
-                            (pair_model_b_tmp, pair_model_a_tmp)
-                        ) not in pairwise_log:
-                            highest_p_pair_val = p_val
-                            highest_pair_model_a = pair_model_a_tmp
-                            highest_pair_model_b = pair_model_b_tmp
+                model_a = id_to_model[id_a]
+                model_b = id_to_model[id_b]
+                if (model_a, model_b) in pairwise_log or (
+                    model_b,
+                    model_a,
+                ) in pairwise_log:
+                    print("Skipping due to pair already done")
+                    continue
 
-                        highest_p_pair_val = p_val
-
-            if highest_p_pair_val < TARGET_P:
-                continue
-
-            print(
-                "Targeting",
-                highest_p_pair_val,
-                highest_pair_model_a,
-                highest_pair_model_b,
-            )
-
-            pairs_info.append((language, highest_pair_model_a, highest_pair_model_b))
+                print(
+                    f"Targeting entropy {entropy:.3f} between {model_a} and {model_b}"
+                )
+                pairs_info.append((language, model_a, model_b))
+                break
 
         print("Pairs info", pairs_info)
-
-        if len(pairs_info) == 0:
+        if not pairs_info:
+            # We're done!
             break
 
-        for item in pairs_info:
-            lang, model_a, model_b = item
-
-            comparison_data_resp = compare_set(
-                lang, model_a, model_b, cache, compare_models
+        for language, model_a, model_b in pairs_info:
+            resp = compare_set(language, model_a, model_b, cache, compare_models)
+            compare_sets.append(
+                {
+                    "language": language,
+                    "model_a": model_a,
+                    "model_b": model_b,
+                    "comparisons": resp,
+                }
             )
+            pairwise_log.append((model_a, model_b))
 
-            to_add = {
-                "language": language,
-                "model_a": model_a,
-                "model_b": model_b,
-                "comparisons": comparison_data_resp,
-            }
-            compare_sets.append(to_add)
-            pairwise_log.add((model_a, model_b))
+    print(len(pairwise_log))
 
     # Now build the rankings...
     langs_results = []
@@ -601,6 +609,8 @@ def evaluate_datasets(target_languages, target_models, cache, compare_models):
 
         langs_results.append({"language": language.value, "data": out})
 
+        print_model_rankings(amplified_data)
+
         # various variants we want to generate:
         # - standard with signal amplification and noise reduction: yes, we do keep individual comparison, but
         # where there is consensus we amplify by creating new ones, and when there is not we dampen. In order to do this,
@@ -679,7 +689,6 @@ def amplify(relevant_comparisons):
         a_quant = len([x for x in grouped if x.a_success])
         b_quant = len([x for x in grouped if x.b_success])
         ident_quant = len([x for x in grouped if x.identical])
-        print(a_quant, b_quant, ident_quant)
 
         model_a = grouped[0].tested_entry_a
         model_b = grouped[0].tested_entry_b

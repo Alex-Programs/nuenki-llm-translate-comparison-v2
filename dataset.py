@@ -25,6 +25,21 @@ SENTENCES_LIST = {
         "Subscribe to Premium",
         "Helldivers II: A Cup of Liber Tea",  # the "Liber Tea" is an interesting test
         "Additional Notes",  # header
+        "oh god",  # discord msg
+        "poorly calculated risks",  # discord name
+        "Subscribe to future projects",  # londonunderground.live
+        "The London Minute",  # ^
+        "Hover for details",  # ^
+        "© OpenStreetMap contributors",  # ^
+        "Why the Apple II Didn't Support Lowercase Letters (2020)",  # https://news.ycombinator.com/item?id=43949056
+        "Relevant people",  # twitter ui
+        "Ask anything",
+        "Reply All",
+        "Mark as Read",
+        "Dark Mode",
+        "Light Mode",
+        "404 Not Found",
+        "Forgot Password?",
     ],
     "short_sentence": [
         "This isn’t what I ordered.",  # wrote myself
@@ -54,7 +69,23 @@ SENTENCES_LIST = {
         "You may be looking for",
         "Looking for something else?",
         "This site is unfinished.",
-        "I'm a programmer and student.",
+        "I'm a programmer and student.",  # personal site
+        "Our new privacy policy will take effect on Thursday.",  # I wrote
+        "Learning to drive can be rather time consuming",  # I wrote. personal experience
+        "I drove to Kingswood earlier today",  # statement of fact
+        "Is that all for today?",
+        "Driving can be rather tiring.",
+        "What's the time?",
+        "I completely forgot about that!",
+        "The train's incredibly late",
+        "Would you like to grab a drink later?",
+        "Fair point tbh; let's go that route then.",
+        "That last-minute objection thoroughly complicated matters.",
+        "I was waiting for memes of this scene!",  # https://www.reddit.com/r/Helldivers/comments/1kjxcvp/what_if_nothing_comes_the_13th_and_the_warbond/
+        "Station 81 is your last hope",  # ^
+        "If that happens I'm uninstalling",  # ^
+        "There Should Be An E2 style plane",  # https://www.reddit.com/r/vtolvr/comments/1kjij5k/there_should_be_an_e2_style_plane/
+        "Waste of a perfectly good aircraft",
     ],
     "medium_sentence": [
         "In the very last update, I noticed that the right-click menu is translucent.",  # discord
@@ -73,6 +104,15 @@ SENTENCES_LIST = {
         "I can enjoy my online time guilt free, knowing I'm also learning a new language.",  # cemonds quote on nuenki landing page
         "In addition to querying every sentence in every webpage, Nuenki also extensively uses them in its sentence-difficulty estimation.",  # nuenki blog post
         "Honestly, though, this data is so noisy that it's not worth drawing any conclusions from.",
+        "Your IP address has exhibited unusual activity and has been flagged for verification",  # I wrote
+        "The quick brown fox may be fast and nimble, but he might have trouble jumping over all but the laziest dogs.",
+        "It's apparently completely normal for new washing machines to make burning smells for a few days.",  # our new washing machine is making burning smells.
+        "It's often easier to plan what books you're going to read than to actually find time to read them.",  # personal experience.
+        "why have i got a feeling a *lot* of autistic people have used this site",  # cam; discord
+        "Honestly, I'm having trouble deciding what to make of that whole kerfuffle",  # me
+        "The decision to proceed with the project was announced after a thorough review of the necessary rules and procedures.",  # passive voice
+        "It is often said that mistakes can serve as lessons, but can lessons serve as mistakes?",  # meaningless drivel in passive voice
+        "All blips are blops; all blops are blups; but not all blups are blips, nor blops blups!",  # lovely logic puzzle
     ],
     "long_sentence": [
         'The woman said she quit her job because she felt "unpopular", partly because of a Star Wars personality test, and yet tried to also sue the company for "unfair dismissal".',  # https://www.reddit.com/r/unitedkingdom/comments/1kgv5us/comment/mr1v8qq/
@@ -93,6 +133,17 @@ SENTENCES_LIST = {
         "All the instrumentation remained on the Javascript side. I was surprised by how fast the WASM calls were - I expected the FFI (Foreign Function Interface) overhead to limit the performance improvements.",
         "Conduct fixed comparisons, then start iteratively fitting the model and comparing the two worst p-values until confidence is achieved.",
         "I'm using this website to catalogue my projects - not because they're particularly interesting, but because I enjoy writing and it's useful to have a record of the things I've done.",  # my personal site
+        "The use case for something like this is probably a wearer who is experiencing heart palpitations, and has the time and clarity of thought to actually find the correct app on their device and start recording.",  # https://news.ycombinator.com/item?id=43918478
+        "The Apple II didn't really advance my math research (that would be the later 128K Macintosh, to which we ported the Macaulay computer algebra system), but various friends learned computers at my apartment, shaping their later careers.",  # https://news.ycombinator.com/item?id=43949056
+        "Do not reply to me with cases where webassembly isn't intended to be used, I'm specifically looking for flaws in how webassembly itself was conceived and is implemented",  # mod of https://x.com/scheminglunatic/status/1921306167273263372
+        "The report, which the committee that was appointed last year has worked on laboriously for months, detailed incredible findings that few could have anticipated, but many were eager to read.",  # intentionally hideous sentence
+        "It was with considerable - and well hidden - reluctance, stemming from a great many failures at public speaking in his long and storied past, that he agreed to give the speech.",  # another intentionally awful one
+        "And yet, if we do not consider the evidence that has been provided in accordance with your previous statements regarding the matter of justice, I would argue that there is no justice!",  # once more, awful awful sentences
+        "Precisely when that ancient civilisation, whose great and monumental ruins still mystify archeologists, had been founded remained a topic of great - and fiery - debate.",
+        "And if all do their duty, and the necessary preparations are made - as they are being made! - then I have no doubt in my mind that this nation shall once again, as we have done many times before and may well do many times again, ride out the storm of war.",  # awful from-memory thing from churchill, with added subordinate clauses for fun
+        "The merger between ImaginaryCorp Solutions and CorpoTechnologies Inc., valued at approx. 4.7b, is expected to be finalized by Q3 2025, pending regulatory approval",  # some inference to do
+        "The fundamental philosophical argument, which posits that consciousness is merely an emergent property of a sufficiently complex facsimile of thinking, rather than some innate property of Man, continues to provoke intense debate among academics and laymen alike; the proliferation of LLMs and the success of the transformer architecture, with their accompanying ethical concerns, have transformed the debate from a theoretical academic interest to a very real, very visceral, question.",  # so long that any sane person would make it a paragraph, plus a littany of subordinate clauses and the slightly archaic use of Man
+        "Detailed and extensive documents regarding the emergency evacuation procedures in the hypothetical circumstance of an inbound hurricane were distributed to all residents well in advance of the hurricane season and its accompanying threat; nevertheless, many claimed never to have received them.",  # passive voice
     ],
     "paragraph": [
         "I built that, and made it open source. It turns out that you can! While its coherence is slightly lower than its peers (more on that in a moment), it is the most idiomatic model while also being far more consistent, with a much lower standard deviation across all three metrics. It works by taking the top 3-4 models for a given language (based on this research), translating with them, then having a judge model (currently redacted) consider the strengths and weaknesses of each translation and merge them together in an idiomatic way.",  # from https://nuenki.app/blog/the_best_translator_is_a_hybrid_translator, except I replaced "GPT-4.1" with "redacted" because I felt mentioning specific models would do little to help the "model-lineage-bias" issue!

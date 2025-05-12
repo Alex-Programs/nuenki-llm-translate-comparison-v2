@@ -56,6 +56,11 @@ def process_sentence(
             return check
         else:
             print("Translating", cache_key)
+
+            # this is to avoid getting ratelimited...
+            sleep_t = choice(range(0, 12))
+            time.sleep(sleep_t)
+
             start_t = None
             end_t = None
             translation = None
@@ -71,7 +76,7 @@ def process_sentence(
                     end_t = time.time()
                     break
                 except Exception as e:
-                    print("Err on translate", e)
+                    print("Err on translate", e, "with m", model)
                     time.sleep(i * choice(range(3, 12)))
 
             cache.set(cache_key, translation)
@@ -82,6 +87,7 @@ def process_sentence(
     model_b_translation = get_translation_with_cache_check(model_b)
 
     for comparison_model, comparison_inference in compare_models:
+        print("MMM", model_a, model_b)
         print("Comparison with ", comparison_model)
 
         # handle 483's (refusals). This feels like a better method than effectively allowing them to
@@ -210,13 +216,21 @@ B: ```{model_b_translation}```"""
             print("Cache hit")
         else:
             print("Inference for comparison")
-            for i in range(10):
+            wait_t = choice(range(0, 6))
+            time.sleep(wait_t)
+
+            for i in range(3):
                 try:
                     comparison_data = comparison_inference.infer(comparison_prompt, 0)
                     if comparison_data:
                         break
                 except Exception as e:
-                    print("Error during inference:", e)
+                    print(
+                        "Error during inference:",
+                        e,
+                        "with comp model",
+                        comparison_model,
+                    )
                     time.sleep(i * choice(range(5, 25)))
 
         print("Comparison data", comparison_data)
@@ -224,6 +238,7 @@ B: ```{model_b_translation}```"""
         if (
             not "Translation" in last_line_unswapped
             and not "Identical" in last_line_unswapped
+            and len(last_line_unswapped.split("\n")) > 2
         ):
             penul = comparison_data.strip().split("\n")[-2].strip()
             if (
@@ -298,7 +313,7 @@ B: ```{model_b_translation}```"""
                     evaluating_response=comparison_data,
                 )
             )
-            break
+            continue
         elif "Translation B" in last_line:
             cache.set(key, comparison_data)
             output_queue.put(
@@ -317,7 +332,7 @@ B: ```{model_b_translation}```"""
                     evaluating_response=comparison_data,
                 )
             )
-            break
+            continue
         elif "Identical" in last_line:
             cache.set(key, comparison_data)
             output_queue.put(
@@ -336,7 +351,7 @@ B: ```{model_b_translation}```"""
                     evaluating_response=comparison_data,
                 )
             )
-            break
+            continue
         else:
             print("Cannot get selection from: ", comparison_data)
 
@@ -447,7 +462,7 @@ def evaluate_datasets(target_languages, target_models, cache, compare_models):
 
     # iterative active learning loop using entropy
 
-    MIN_ENTROPY = 0.5
+    MIN_ENTROPY = 1.05
 
     print(len(pairwise_log))
 
@@ -472,6 +487,8 @@ def evaluate_datasets(target_languages, target_models, cache, compare_models):
             id_to_model = dict(id_model_pairs)
 
             # pick highest-entropy untested pair
+            print(model_base.rank_pairwise_by_entropy())
+
             for id_a, id_b, entropy in model_base.rank_pairwise_by_entropy():
                 print("Ent", entropy)
                 if entropy < MIN_ENTROPY:

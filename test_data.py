@@ -175,7 +175,7 @@ evaluation_targets_sensible_large_temp0_nothink = [
         inference_service_name=InferenceCompany.Openrouter,
         inference_source=OpenrouterExecutableTranslator(
             OPENROUTER_API_KEY,
-            "meta-llama/llama-4-maverick:free",
+            "meta-llama/llama-4-maverick",
         ),
         temp=0,
         thinking="N/A",

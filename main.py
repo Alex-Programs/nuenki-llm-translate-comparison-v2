@@ -43,20 +43,20 @@ compare_models = [
             OPENROUTER_API_KEY, "google/gemini-2.5-flash-preview"
         ),
     ),
+    (
+        "meta/llama-4-maverick-comparison-system",
+        OpenrouterGenericInference(OPENROUTER_API_KEY, "meta-llama/llama-4-maverick"),
+    ),
 ]
 
 # first run on testing dataset
 
-data_testing = evaluate_datasets(
+"""data_testing = evaluate_datasets(
     target_languages_testing, evaluation_targets_testing, cache, compare_models
 )
 
 with open("out_testing.json", "w") as f:
-    f.write(json.dumps(data_testing, indent=4))
-
-import sys
-
-sys.exit()
+    f.write(json.dumps(data_testing, indent=4))"""
 
 # then run on sensible_large on German for a broad idea
 data_initial_comparison = evaluate_datasets(

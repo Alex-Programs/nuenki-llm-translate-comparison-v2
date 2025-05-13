@@ -9,6 +9,9 @@ import threading
 from queue import Queue
 from random import choice
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from collections import defaultdict
+import numpy as np
+from scipy.stats import spearmanr, pearsonr  # Ensure scipy is installed
 
 
 def all_non_duplicate_sets(input_list):
@@ -474,7 +477,7 @@ def evaluate_datasets(target_languages, target_models, cache, compare_models):
     print("Finished initial comparisons")
     # iterative active learning loop using entropy
 
-    MIN_ENTROPY = 1
+    MIN_ENTROPY = 1.09054
 
     print(len(pairwise_log))
 
@@ -655,7 +658,16 @@ def evaluate_datasets(target_languages, target_models, cache, compare_models):
         # ALL of that, but sorted by sentence types (yeah we're going to want to make it modular)
 
         datadump = analyze_category_signal_strength(comparison_items, SENTENCES_LIST)
+
         print_category_signal_analysis(datadump)
+
+        print_judge_analysis(
+            analyze_judge_performance(
+                comparison_items,
+                target_models,
+                [name_tuple[0] for name_tuple in compare_models],
+            )
+        )
 
     return langs_results
 
@@ -1258,3 +1270,322 @@ def print_category_signal_analysis(analysis_results):
         "  BT Sig.Pair%: Ratio of significantly different model pairs (p < threshold) from category-specific BT."
     )
     print("  BT Fit: Whether a BT model was successfully fitted for the category.")
+
+
+def analyze_judge_performance(
+    all_comparison_items: list[ComparisonItem],
+    all_tested_models: list[TestedEntry],
+    judge_names: list[str],  # This will now correctly be a list of strings
+):
+    """
+    Analyzes the performance of different judges.
+    (docstring as before)
+    """
+    judge_analysis_results = {}
+
+    # --- 1. Per-Judge Basic Statistics (Agreement with Majority, Decisiveness) ---
+    # ... (this part should be mostly fine, but ensure judge_name in judge_stats is a string)
+    comparison_instance_votes = defaultdict(list)
+    for item in all_comparison_items:
+        instance_key = (
+            item.sentence,
+            item.tested_entry_a.unique_id(),
+            item.tested_entry_b.unique_id(),
+        )
+        vote = None
+        if item.a_success:
+            vote = "win_a"
+        elif item.b_success:
+            vote = "win_b"
+        elif item.identical:
+            vote = "tie"
+
+        if vote:
+            comparison_instance_votes[instance_key].append(
+                {
+                    "judge": item.evaluating_model,  # This is already a string
+                    "vote": vote,
+                }
+            )
+
+    # Initialize judge_stats with string keys
+    judge_stats = {
+        name_str: {  # name_str is now guaranteed to be a string
+            "agreements_with_majority": 0,
+            "total_decisions_in_majority_contests": 0,
+            "decisions_made": 0,
+            "ties_called": 0,
+            "a_wins_called": 0,
+            "b_wins_called": 0,
+            "agreement_rate_with_majority": 0.0,
+            "tie_rate": 0.0,
+            "bt_model_fitted": False,
+            "bt_score_pearson_corr_overall": None,
+            "bt_rank_spearman_corr_overall": None,
+        }
+        for name_str in judge_names  # judge_names is now list[str]
+    }
+    # ... (rest of section 1 logic for populating judge_stats remains the same,
+    #      as v_info["judge"] is already a string from item.evaluating_model) ...
+    for instance_key, votes_for_instance in comparison_instance_votes.items():
+        if not votes_for_instance:
+            continue
+        vote_counts = defaultdict(int)
+        for v_info in votes_for_instance:
+            vote_counts[v_info["vote"]] += 1
+        if not vote_counts:
+            continue
+        majority_vote = max(vote_counts, key=vote_counts.get)
+        for v_info in votes_for_instance:
+            judge_name_str = v_info["judge"]  # This is a string
+            if judge_name_str not in judge_stats:  # Check against string keys
+                print(
+                    f"Warning: Judge '{judge_name_str}' from comparison item not in provided judge_names list. Skipping."
+                )
+                continue
+            judge_stats[judge_name_str]["total_decisions_in_majority_contests"] += 1
+            if v_info["vote"] == majority_vote:
+                judge_stats[judge_name_str]["agreements_with_majority"] += 1
+            judge_stats[judge_name_str]["decisions_made"] += 1
+            if v_info["vote"] == "win_a":
+                judge_stats[judge_name_str]["a_wins_called"] += 1
+            elif v_info["vote"] == "win_b":
+                judge_stats[judge_name_str]["b_wins_called"] += 1
+            elif v_info["vote"] == "tie":
+                judge_stats[judge_name_str]["ties_called"] += 1
+
+    for name_str in judge_names:
+        if judge_stats[name_str]["total_decisions_in_majority_contests"] > 0:
+            judge_stats[name_str]["agreement_rate_with_majority"] = (
+                judge_stats[name_str]["agreements_with_majority"]
+                / judge_stats[name_str]["total_decisions_in_majority_contests"]
+            )
+        if judge_stats[name_str]["decisions_made"] > 0:
+            judge_stats[name_str]["tie_rate"] = (
+                judge_stats[name_str]["ties_called"]
+                / judge_stats[name_str]["decisions_made"]
+            )
+
+    judge_analysis_results["stats_by_judge"] = judge_stats
+
+    # --- 2. Bradley-Terry Model Comparison ---
+    # `all_tested_models` is the list of TestedEntry objects for the current evaluation.
+    # Their index in this list will serve as their integer ID for the BT model.
+
+    # Create a mapping from a model's unique_id string to its integer ID (index)
+    unique_id_to_int_id_map = {
+        model_obj.unique_id(): i for i, model_obj in enumerate(all_tested_models)
+    }
+
+    # This list is used by produce_sane_data_from_model. It needs (int_id, TestedEntry_object).
+    all_id_model_pairs_for_bt = [
+        (i, model_obj) for i, model_obj in enumerate(all_tested_models)
+    ]
+
+    # Fit overall BT model (using all judges' decisions for the current language)
+    overall_bt_comparisons_input = []
+    for (
+        item
+    ) in all_comparison_items:  # `all_comparison_items` are for the current language
+        id_a = unique_id_to_int_id_map.get(item.tested_entry_a.unique_id())
+        id_b = unique_id_to_int_id_map.get(item.tested_entry_b.unique_id())
+
+        if id_a is None or id_b is None:
+            missing_a_id = item.tested_entry_a.unique_id() if id_a is None else ""
+            missing_b_id = item.tested_entry_b.unique_id() if id_b is None else ""
+            print(
+                f"Warning: Model(s) '{missing_a_id}{missing_b_id}' from comparison item "
+                f"not in all_tested_models map during overall BT fitting. Skipping this item."
+            )
+            continue
+
+        if item.a_success:
+            overall_bt_comparisons_input.append((id_a, id_b, "win1"))
+        elif item.b_success:
+            overall_bt_comparisons_input.append((id_a, id_b, "win2"))
+        elif item.identical:
+            overall_bt_comparisons_input.append((id_a, id_b, "tie"))
+
+    overall_bt_model = None
+    overall_strengths_map = {}
+    overall_ranks_map = {}
+
+    if len(overall_bt_comparisons_input) >= 10 and len(all_tested_models) >= 2:
+        try:
+            overall_bt_model = DavidsonBT.from_comparisons(
+                overall_bt_comparisons_input, n_items=len(all_tested_models)
+            )
+            raw_overall_strengths = overall_bt_model.get_strengths()
+            for i, strength in enumerate(raw_overall_strengths):  # i is the int_id
+                overall_strengths_map[i] = strength
+
+            sorted_overall_by_strength = sorted(
+                overall_strengths_map.items(),
+                key=lambda x_item: x_item[1],
+                reverse=True,
+            )
+            for rank, (model_id, strength) in enumerate(sorted_overall_by_strength):
+                overall_ranks_map[model_id] = rank
+
+            # THE CRITICAL FIX IS HERE: all_id_model_pairs_for_bt is now correctly (int, TestedEntry)
+            judge_analysis_results["overall_bt_model_summary"] = (
+                produce_sane_data_from_model(
+                    all_id_model_pairs_for_bt, overall_bt_model
+                )
+            )
+        except Exception as e:
+            print(f"Could not fit overall BT model for judge analysis: {e}")
+            overall_bt_model = None
+    else:
+        print(
+            f"Not enough data for overall BT model in judge analysis. Comparisons: {len(overall_bt_comparisons_input)}, Models: {len(all_tested_models)}"
+        )
+
+    # Fit BT model for each judge and compare to overall
+    for judge_name_str in judge_names:  # judge_names is now list[str]
+        if not overall_bt_model:
+            judge_stats[judge_name_str]["bt_model_fitted"] = False  # Use judge_name_str
+            continue
+
+        judge_specific_comparisons_input = []
+        for item in all_comparison_items:
+            if item.evaluating_model == judge_name_str:  # Compare string with string
+                id_a = unique_id_to_int_id_map.get(item.tested_entry_a.unique_id())
+                id_b = unique_id_to_int_id_map.get(item.tested_entry_b.unique_id())
+
+                if id_a is None or id_b is None:
+                    # Log if necessary, then skip
+                    continue
+
+                if item.a_success:
+                    judge_specific_comparisons_input.append((id_a, id_b, "win1"))
+                elif item.b_success:
+                    judge_specific_comparisons_input.append((id_a, id_b, "win2"))
+                elif item.identical:
+                    judge_specific_comparisons_input.append((id_a, id_b, "tie"))
+
+        if len(judge_specific_comparisons_input) < 10 or len(all_tested_models) < 2:
+            judge_stats[judge_name_str]["bt_model_fitted"] = False  # Use judge_name_str
+            print(
+                f"Judge {judge_name_str} has insufficient data for BT model. Comparisons: {len(judge_specific_comparisons_input)}, Models: {len(all_tested_models)}"
+            )
+            continue
+
+        try:
+            judge_bt_model = DavidsonBT.from_comparisons(
+                judge_specific_comparisons_input, n_items=len(all_tested_models)
+            )
+            judge_stats[judge_name_str]["bt_model_fitted"] = True  # Use judge_name_str
+
+            judge_strengths_map = {
+                i: strength for i, strength in enumerate(judge_bt_model.get_strengths())
+            }
+            sorted_judge_by_strength = sorted(
+                judge_strengths_map.items(), key=lambda x_item: x_item[1], reverse=True
+            )
+            judge_ranks_map = {
+                model_id: rank
+                for rank, (model_id, strength) in enumerate(sorted_judge_by_strength)
+            }
+
+            common_model_ids = sorted(
+                list(
+                    set(overall_strengths_map.keys()) & set(judge_strengths_map.keys())
+                )
+            )
+
+            if len(common_model_ids) > 1:
+                overall_s_values = [
+                    overall_strengths_map[mid] for mid in common_model_ids
+                ]
+                judge_s_values = [judge_strengths_map[mid] for mid in common_model_ids]
+                overall_r_values = [overall_ranks_map[mid] for mid in common_model_ids]
+                judge_r_values = [judge_ranks_map[mid] for mid in common_model_ids]
+
+                if len(set(overall_s_values)) > 1 and len(set(judge_s_values)) > 1:
+                    pearson_corr, _ = pearsonr(overall_s_values, judge_s_values)
+                    judge_stats[judge_name_str][
+                        "bt_score_pearson_corr_overall"
+                    ] = pearson_corr
+
+                if len(set(overall_r_values)) > 1 and len(set(judge_r_values)) > 1:
+                    spearman_corr, _ = spearmanr(overall_r_values, judge_r_values)
+                    judge_stats[judge_name_str][
+                        "bt_rank_spearman_corr_overall"
+                    ] = spearman_corr
+
+        except Exception as e:
+            print(
+                f"Error fitting BT model for judge {judge_name_str}: {e}"
+            )  # Use judge_name_str
+            judge_stats[judge_name_str]["bt_model_fitted"] = False  # Use judge_name_str
+
+    return judge_analysis_results
+
+
+def print_judge_analysis(analysis_results):
+    print("\n\n--- Judge Performance Analysis ---")
+    stats_by_judge = analysis_results.get("stats_by_judge")
+    if not stats_by_judge:
+        print("No judge statistics found in analysis results.")
+        return
+
+    print("=" * 130)  # Adjusted width
+    header = (
+        f"{'Judge':<40} | {'Agree %':>8} | {'Decisions':>9} | {'Tie %':>6} | "
+        f"{'Score Corr':>11} | {'Rank Corr':>10} | {'BT Fit':<6}"
+    )
+    print(header)
+    print("-" * 130)
+
+    sorted_judges = sorted(
+        stats_by_judge.items(),
+        key=lambda item: item[1].get("agreement_rate_with_majority", 0),
+        reverse=True,
+    )
+
+    for judge_name, data in sorted_judges:
+        agree_pct_str = f"{data.get('agreement_rate_with_majority', 0) * 100:.2f}%"
+        decisions_str = str(data.get("decisions_made", 0))
+        tie_pct_str = f"{data.get('tie_rate', 0) * 100:.2f}%"
+
+        score_corr = data.get("bt_score_pearson_corr_overall")
+        score_corr_str = f"{score_corr:.3f}" if score_corr is not None else "N/A"
+
+        rank_corr = data.get("bt_rank_spearman_corr_overall")
+        rank_corr_str = f"{rank_corr:.3f}" if rank_corr is not None else "N/A"
+
+        bt_fitted_str = str(data.get("bt_model_fitted", False))
+
+        row = (
+            f"{judge_name:<40} | {agree_pct_str:>8} | {decisions_str:>9} | {tie_pct_str:>6} | "
+            f"{score_corr_str:>11} | {rank_corr_str:>10} | {bt_fitted_str:<6}"
+        )
+        print(row)
+    print("=" * 130)
+    print("\nField Explanations:")
+    print(
+        "  Agree %: Judge agreement with majority vote on a specific (sentence, A, B) comparison."
+    )
+    print("  Decisions: Total comparisons evaluated by this judge.")
+    print("  Tie %: Percentage of times judge declared a tie.")
+    print(
+        "  Score Corr: Pearson correlation of judge's BT strengths with overall BT strengths."
+    )
+    print(
+        "  Rank Corr: Spearman correlation of judge's BT ranks with overall BT ranks."
+    )
+    print(
+        "  BT Fit: If a Bradley-Terry model was fitted using only this judge's decisions."
+    )
+    print(
+        "  N/A or False for correlations/BT Fit often means insufficient data for that judge."
+    )
+
+    if "overall_bt_model_summary" in analysis_results:
+        print("\n--- Overall BT Model (All Judges) Summary ---")
+        # Assuming print_model_rankings is available and works with the summary format
+        print_model_rankings(
+            analysis_results["overall_bt_model_summary"],
+            language_name="Overall (All Judges - For Judge Analysis)",
+        )

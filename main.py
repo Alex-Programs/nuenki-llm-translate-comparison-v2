@@ -39,7 +39,9 @@ compare_models = [
     # ),
     (
         "qwen/qwen3-235b-a22b-comparison-system",  # has a claude lineage, because they trained off of outputs
-        OpenrouterGenericInference(OPENROUTER_API_KEY, "qwen/qwen3-235b-a22b"),
+        OpenrouterGenericInference(
+            OPENROUTER_API_KEY, "qwen/qwen3-235b-a22b", also_add="/no_think\n"
+        ),
     ),
     (
         "deepseek/deepseek-v3-comparison-system",
@@ -60,6 +62,10 @@ compare_models = [
     (
         "meta/llama-4-maverick-comparison-system",
         OpenrouterGenericInference(OPENROUTER_API_KEY, "meta-llama/llama-4-maverick"),
+    ),
+    (
+        "mistralai/mistral-medium-3",
+        OpenrouterGenericInference(OPENROUTER_API_KEY, "mistralai/mistral-medium-3"),
     ),
 ]
 

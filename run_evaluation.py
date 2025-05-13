@@ -44,10 +44,15 @@ def deterministic_coin_flip(s: str) -> bool:
     return bool(h[0] & 1)
 
 
+def log_sentence_data(*args, **kwargs):
+    return
+    print("S", *args, **kwargs)
+
+
 def process_sentence(
     language, category, sentence, model_a, model_b, cache, compare_models, output_queue
 ):
-    print("Checking", language, category, sentence)
+    log_sentence_data("Checking", language, category, sentence)
 
     def get_translation_with_cache_check(model):
         cache_key = f"TRANSLATION Language:{language.value}|Model: {model.unique_id()}|Sentence category:{category}|Sentence md5:{md5hash(sentence)}"
@@ -55,7 +60,7 @@ def process_sentence(
         if check:
             return check
         else:
-            print("Translating", cache_key)
+            log_sentence_data("Translating", cache_key)
 
             # this is to avoid getting ratelimited...
             sleep_t = choice(range(0, 4))
@@ -67,7 +72,7 @@ def process_sentence(
 
             i = 0
             while True:
-                print("Translation attempt", i)
+                log_sentence_data("Translation attempt", i)
                 i += 1
                 try:
                     start_t = time.time()
@@ -77,7 +82,7 @@ def process_sentence(
                     end_t = time.time()
                     break
                 except Exception as e:
-                    print("Err on translate", e, "with m", model)
+                    log_sentence_data("Err on translate", e, "with m", model)
                     time.sleep(i * choice(range(3, 12)))
 
             cache.set(cache_key, translation)
@@ -88,8 +93,8 @@ def process_sentence(
     model_b_translation = get_translation_with_cache_check(model_b)
 
     for comparison_model, comparison_inference in compare_models:
-        print("MMM", model_a, model_b)
-        print("Comparison with ", comparison_model)
+        log_sentence_data("MMM", model_a, model_b)
+        log_sentence_data("Comparison with ", comparison_model)
 
         # handle 483's (refusals). This feels like a better method than effectively allowing them to
         # veto translations (if we just skipped instead)
@@ -113,7 +118,7 @@ def process_sentence(
                     evaluating_response="N/A",
                 )
             )
-            print("Both refused!")
+            log_sentence_data("Both refused!")
             continue
         elif a_refusal:
             output_queue.put(
@@ -132,7 +137,7 @@ def process_sentence(
                     evaluating_response="N/A",
                 )
             )
-            print("Only A refused")
+            log_sentence_data("Only A refused")
             continue
         elif b_refusal:
             output_queue.put(
@@ -151,12 +156,12 @@ def process_sentence(
                     evaluating_response="N/A",
                 )
             )
-            print("Only B refused")
+            log_sentence_data("Only B refused")
             continue
 
         # another special case: If they're literally the same, just write down Identical
         if model_a_translation.strip() == model_b_translation.strip():
-            print("Identical-Skip")
+            log_sentence_data("Identical-Skip")
             output_queue.put(
                 ComparisonItem(
                     language=language,
@@ -175,13 +180,13 @@ def process_sentence(
             )
             continue
 
-        print(model_a_translation, "::", model_b_translation)
+        log_sentence_data(model_a_translation, "::", model_b_translation)
 
         coin_flip_key = f"COIN FLIP Language:{language.value}|Sentence cat:{category}|Sentence md5:{md5hash(sentence)}|{comparison_model}|{model_a.unique_id()}|{model_b.unique_id()}"
         swap_a_b = deterministic_coin_flip(coin_flip_key)
 
         if swap_a_b:
-            print("SWAPPING ORDER!!")
+            log_sentence_data("SWAPPING ORDER!!")
             model_a_translation, model_b_translation = (
                 model_b_translation,
                 model_a_translation,
@@ -209,14 +214,14 @@ A: ```{model_a_translation}```
 B: ```{model_b_translation}```"""
 
         key = f"COMPARISON hash:{md5hash(comparison_prompt)} Model:{comparison_model}"
-        print("KEY", key)
+        log_sentence_data("KEY", key)
         comparison_data = None
 
         if cache.get(key):
             comparison_data = cache.get(key)
-            print("Cache hit")
+            log_sentence_data("Cache hit")
         else:
-            print("Inference for comparison")
+            log_sentence_data("Inference for comparison")
             wait_t = choice(range(0, 6))
             time.sleep(wait_t)
 
@@ -226,7 +231,7 @@ B: ```{model_b_translation}```"""
                     if comparison_data:
                         break
                 except Exception as e:
-                    print(
+                    log_sentence_data(
                         "Error during inference:",
                         e,
                         "with comp model",
@@ -237,7 +242,7 @@ B: ```{model_b_translation}```"""
         if not comparison_data:
             continue
 
-        print("Comparison data", comparison_data)
+        log_sentence_data("Comparison data", comparison_data)
         last_line_unswapped = comparison_data.strip().split("\n")[-1].strip()
         if (
             not "Translation" in last_line_unswapped
@@ -253,7 +258,7 @@ B: ```{model_b_translation}```"""
                 # fix gemini being stupid without a rerun
                 last_line_unswapped = penul
             else:
-                print(
+                log_sentence_data(
                     f"TRY REPLACE: LAST LINE UNSWAPPED BEFORE: `{last_line_unswapped}`"
                 )
                 # try to fix it this way...
@@ -266,18 +271,18 @@ B: ```{model_b_translation}```"""
                 elif last_line_unswapped == "B":
                     last_line_unswapped = "Translation B"
 
-                print(
+                log_sentence_data(
                     f"TRY REPLACE: LAST LINE UNSWAPPED AFTER: `{last_line_unswapped}`"
                 )
 
-        print("Last line unswapped", last_line_unswapped)
+        log_sentence_data("Last line unswapped", last_line_unswapped)
         if swap_a_b:
             last_line = last_line_unswapped
             last_line = last_line.replace("Translation A", "tempA!!!000")
             last_line = last_line.replace("Translation B", "tempB!!!000")
             last_line = last_line.replace("tempA!!!000", "Translation B")
             last_line = last_line.replace("tempB!!!000", "Translation A")
-            print("Swapped: ", last_line)
+            log_sentence_data("Swapped: ", last_line)
 
             model_a_translation, model_b_translation = (
                 model_b_translation,
@@ -296,7 +301,9 @@ B: ```{model_b_translation}```"""
 
         if hit_count > 1:
             # invalid!
-            print("Reports for multiple in response: " + str(comparison_data))
+            log_sentence_data(
+                "Reports for multiple in response: " + str(comparison_data)
+            )
             continue
 
         if "Translation A" in last_line:
@@ -357,7 +364,7 @@ B: ```{model_b_translation}```"""
             )
             continue
         else:
-            print("Cannot get selection from: ", comparison_data)
+            log_sentence_data("Cannot get selection from: ", comparison_data)
 
 
 def compare_set(language, model_a, model_b, cache, compare_models):
@@ -464,9 +471,10 @@ def evaluate_datasets(target_languages, target_models, cache, compare_models):
                 compare_sets.append(to_add)
                 pairwise_log.append((model_a, model_b))
 
+    print("Finished initial comparisons")
     # iterative active learning loop using entropy
 
-    MIN_ENTROPY = 1.05
+    MIN_ENTROPY = 1
 
     print(len(pairwise_log))
 
@@ -528,6 +536,8 @@ def evaluate_datasets(target_languages, target_models, cache, compare_models):
             break
 
         for language, model_a, model_b in pairs_info:
+            print("Comparing", model_a, model_b)
+            print("Already done", len(pairwise_log), "comparisons")
             resp = compare_set(language, model_a, model_b, cache, compare_models)
             print("Comparison done")
             compare_sets.append(

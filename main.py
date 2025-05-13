@@ -25,13 +25,27 @@ compare_models = [
         "openai/gpt-4.1-comparison-system",
         OpenrouterGenericInference(OPENROUTER_API_KEY, "openai/gpt-4.1"),
     ),
+    # (
+    #    "anthropic/claude-3.7-sonnet-comparison-system",
+    #    OpenrouterGenericInference(OPENROUTER_API_KEY, "anthropic/claude-3.7-sonnet"),
+    # ),
+    # (
+    #    "x-ai/grok-3-beta-comparison-system",
+    #    OpenrouterGenericInference(OPENROUTER_API_KEY, "x-ai/grok-3-beta"),
+    # ),
+    # (
+    #    "anthropic/haiku-3.5-comparison-system",
+    #    OpenrouterGenericInference(OPENROUTER_API_KEY, "anthropic/claude-3.5-haiku"),
+    # ),
     (
-        "anthropic/claude-3.7-sonnet-comparison-system",
-        OpenrouterGenericInference(OPENROUTER_API_KEY, "anthropic/claude-3.7-sonnet"),
+        "qwen/qwen3-235b-a22b-comparison-system",  # has a claude lineage, because they trained off of outputs
+        OpenrouterGenericInference(OPENROUTER_API_KEY, "qwen/qwen3-235b-a22b"),
     ),
     (
-        "x-ai/grok-3-beta-comparison-system",
-        OpenrouterGenericInference(OPENROUTER_API_KEY, "x-ai/grok-3-beta"),
+        "deepseek/deepseek-v3-comparison-system",
+        OpenrouterGenericInference(
+            OPENROUTER_API_KEY, "deepseek/deepseek-chat-v3-0324"
+        ),
     ),
     # (
     #    "google/gemini-2.5-pro-exp-comparison-system-thinking",

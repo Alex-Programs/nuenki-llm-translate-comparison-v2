@@ -58,7 +58,7 @@ def process_sentence(
             print("Translating", cache_key)
 
             # this is to avoid getting ratelimited...
-            sleep_t = choice(range(0, 12))
+            sleep_t = choice(range(0, 4))
             time.sleep(sleep_t)
 
             start_t = None
@@ -67,6 +67,7 @@ def process_sentence(
 
             i = 0
             while True:
+                print("Translation attempt", i)
                 i += 1
                 try:
                     start_t = time.time()
@@ -232,6 +233,9 @@ B: ```{model_b_translation}```"""
                         comparison_model,
                     )
                     time.sleep(i * choice(range(5, 25)))
+
+        if not comparison_data:
+            continue
 
         print("Comparison data", comparison_data)
         last_line_unswapped = comparison_data.strip().split("\n")[-1].strip()
@@ -525,6 +529,7 @@ def evaluate_datasets(target_languages, target_models, cache, compare_models):
 
         for language, model_a, model_b in pairs_info:
             resp = compare_set(language, model_a, model_b, cache, compare_models)
+            print("Comparison done")
             compare_sets.append(
                 {
                     "language": language,
